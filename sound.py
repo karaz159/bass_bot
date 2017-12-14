@@ -41,10 +41,15 @@ def start(message):
 @bot.message_handler(content_types=['audio'])
 def get_audio(message):
     bot.send_message(message.chat.id, 'эт аудио, инфа 100')
-    bot.download_file('sound.mp3')
-    sys('mpg123 -w dwnld.wav sound.mp3') #Конвертирую в ваф файл для дальнейшей работы
-    bass(50)
-    audio = open('bass.wav' 'rb')
+    file_info = bot.get_file(message.audio.file_id)
+    downloaded_file = bot.download_file(file_info.file_path)
+    with open('new_file.mp3', 'wb') as new_file:
+        new_file.write(downloaded_file)
+    print('downloaded!')
+    sys('mpg123 -w dwnld.wav new_file.mp3') #Конвертирую new_file в ваф файл для дальнейшей работы
+    bass(25)# out is bass.wav
+    sys('lame -b 160 --vbr-new bass.wav send.mp3')
+    audio = open('send.mp3', 'rb')
     bot.send_audio(message.chat.id, audio)
 
 @bot.message_handler(content_types=['voice'])
