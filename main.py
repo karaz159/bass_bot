@@ -4,7 +4,7 @@ from datetime import datetime
 from os import system as sys
 from config import token as TOKEN
 from time import sleep
-import dbworker, config, tekst, eyed3
+import dbworker, config, tekst, eyed3, cherrypy
 
 def bass(how_many,inn,outt):
 
@@ -60,6 +60,31 @@ hm = open('voice.ogg', 'rb')
 bot = tb.TeleBot(TOKEN)
 bot.set_update_listener(listener)
 ###########################################################################################################
+WEBHOOK_HOST = '46.173.214.150'
+WEBHOOK_PORT = 443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
+WEBHOOK_LISTEN = '0.0.0.0'  # На некоторых серверах придется указывать такой же IP, что и выше
+
+WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Путь к сертификату
+WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Путь к приватному ключу
+
+WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
+WEBHOOK_URL_PATH = "/%s/" % (TOKEN)
+
+class WebhookServer(object):
+    @cherrypy.expose
+    def index(self):
+        if 'content-length' in cherrypy.request.headers and \
+                        'content-type' in cherrypy.request.headers and \
+                        cherrypy.request.headers['content-type'] == 'application/json':
+            length = int(cherrypy.request.headers['content-length'])
+            json_string = cherrypy.request.body.read(length).decode("utf-8")
+            update = tb.types.Update.de_json(json_string)
+            # Эта функция обеспечивает проверку входящего сообщения
+            bot.process_new_updates([update])
+            return ''
+        else:
+            raise cherrypy.HTTPError(403)
+##########################################################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
     state = dbworker.get_current_state(message.chat.id)
@@ -73,7 +98,7 @@ def start(message):
         bot.send_message(message.chat.id, "Хм, что то пошло не так, на твоем бы месте я бы рассказал автору как ты этого добился")
 
     elif state == config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value:
-        bot.send_voice(message.chat.id, hm) #:)
+        bot.send_voice(message.chat.id, hm)
 
     else:  # Под "остальным" понимаем состояние "0" - начало диалога
         bot.send_message(message.chat.id, 'че пацаны, бассбуст?')
@@ -163,4 +188,17 @@ def asking_for_bass_a(message):# Не DRY, Стыдно...
         bot.send_audio(message.chat.id, audio)
         dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_DOWNLOAD.value)
 
-bot.polling()
+bot.remove_webhook()
+
+bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
+                certificate=open(WEBHOOK_SSL_CERT, 'r'))
+
+cherrypy.config.update({
+    'server.socket_host': WEBHOOK_LISTEN,
+    'server.socket_port': WEBHOOK_PORT,
+    'server.ssl_module': 'builtin',
+    'server.ssl_certificate': WEBHOOK_SSL_CERT,
+    'server.ssl_private_key': WEBHOOK_SSL_PRIV
+})
+cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
+
