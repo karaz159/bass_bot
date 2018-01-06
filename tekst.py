@@ -121,5 +121,5 @@ def transform(word):
             else:
                 shit += i
     except AttributeError:
-        shit = 'N3т '
+        shit = random.choice(('N3т', 'NE Y@sNo', '<UнKn0wн>', '4eг0'))
     return shit
