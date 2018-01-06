@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pysndfx import AudioEffectsChain as af
 import telebot as tb
 from datetime import datetime
