@@ -120,6 +120,6 @@ def transform(word):
                 shit += random.choice((i,'Z'))
             else:
                 shit += i
-        except AttributeError:
-            shit = 'N3т'
+    except AttributeError:
+        shit = 'N3т '
     return shit
