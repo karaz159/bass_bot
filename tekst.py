@@ -120,4 +120,3 @@ def transform(word):
         else:
             shit += i
     return shit
-print (transform('Александра лейн - СРЕШ'))

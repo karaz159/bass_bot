@@ -4,6 +4,7 @@ from datetime import datetime
 from os import system as sys
 from config import token as TOKEN
 from time import sleep
+import dbworker, config
 
 def bass(how_many,inn,outt):
     apply_af = af().lowshelf(how_many)
@@ -43,39 +44,107 @@ def download_file(message, name):
     except tb.apihelper.ApiException:
         return False
 
-def convert_to(inn, out):# необходимо понять как вставлять в sys переменные
+def convert_to(inn, out):
     sys('ffmpeg -y -loglevel quiet -i '+ inn + ' ' + out) #Конвертирую inn в ваф файл для дальнейшей работы
-
+hm = open('voice.ogg', 'rb')
+###########################################################################################################
 bot = tb.TeleBot(TOKEN)
 bot.set_update_listener(listener)
-
+###########################################################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, 'че пацаны, бассбуст?')
+    state = dbworker.get_current_state(message.chat.id)
+    if state == config.States.S_ASKING_FOR_DOWNLOAD.value:
+        bot.send_message(message.chat.id, "Я посвятил тебя уже во все, что можно, братан")
+    elif state == config.States.S_GOT_AUDIO.value:
+        bot.send_message(message.chat.id, "Хм, что то пошло не так, на твоем бы месте я бы рассказал автору как ты этого добился")
+    elif state == config.States.S_GOT_VOICE.value:
+        bot.send_message(message.chat.id, "Хм, что то пошло не так, на твоем бы месте я бы рассказал автору как ты этого добился")
+    elif state == config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value:
+        bot.send_voice(message.chat.id, hm)
+    else:  # Под "остальным" понимаем состояние "0" - начало диалога
+        bot.send_message(message.chat.id, 'че пацаны, бассбуст?')
+        dbworker.set_state(message.chat.id, config.States.S_START.value)
+
+
+@bot.message_handler(commands=["reset"])
+def cmd_reset(message):
+    bot.send_message(message.chat.id, "Начнем заново, че пацаны, бассбуст?")
+    dbworker.set_state(message.chat.id, config.States.S_START.value)
+
+
+@bot.message_handler(func=lambda message: dbworker.get_current_state(message.chat.id) == config.States.S_START.value)
+def user_manual(message):
+    # В случае с именем не будем ничего проверять, пусть хоть "25671", хоть Евкакий
+    bot.send_message(message.chat.id, "Все, что тебе нужно, так это кинуть голосовуху или аудиозапись")
+    dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_DOWNLOAD.value)
+
 
 @bot.message_handler(content_types=['audio'])
-def get_audio(message, nigga):
+def get_audio(message):
+    mcfn = './stuff/' + str(message.chat.first_name)
     bot.send_message(message.chat.id, 'эт аудио, инфа 100')
-    if download_file(message, 'new_file.mp3'):
+    if download_file(message, mcfn + '_audio'):
         print('downloaded!')
-        convert_to('new_file.mp3','dwnld.wav')
-        bass(50, 'dwnld.wav', 'bass.wav')# out is bass.wav
-        convert_to('bass.wav','send.mp3')
-        audio = open('send.mp3', 'rb')
-        bot.send_audio(message.chat.id, audio)
+        dbworker.set_state(message.chat.id, config.States.S_GOT_AUDIO)
+        convert_to(mcfn + '_audio',mcfn + '_dwnld.wav')
+        bot.send_message(message.chat.id, 'Скок басу? 1-100')
+        dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value)
     else:
         bot.send_message(message.chat.id, 'Файлик слишком большой, прости, золотце')
 
+
 @bot.message_handler(content_types=['voice'])
 def get_voice(message):
+    mcfn = './stuff/' + str(message.chat.first_name)
     bot.send_message(message.chat.id, 'эт войс, я погромист, меня не обманешь')
-    if download_file(message, 'new_voice.ogg'):
+    if download_file(message, mcfn+'_voice.ogg'):
         print('downloaded!')
-        convert_to('new_voice.ogg', 'new_voice.wav')
-        bass(100, 'new_voice.wav', 'new_voiceb.wav')
-        convert_to('new_voiceb.wav', 'send.ogg')
+        dbworker.set_state(message.chat.id, config.States.S_GOT_VOICE)
+        convert_to(mcfn + '_voice.ogg', mcfn + '_voice.wav')
+        bot.send_message(message.chat.id, 'Скок басу? 1-100')
+        dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_BASS_POWER_VOICE.value)
     else:
         bot.send_message(message.chat.id, 'СЛИШКОМ много болтовни, телеграм не позволяет скачать')
-    voice = open('send.ogg', 'rb')
-    bot.send_voice(message.chat.id, voice)
+
+
+@bot.message_handler(func=lambda message: dbworker.get_current_state(message.chat.id) == config.States.S_ASKING_FOR_BASS_POWER_VOICE.value)
+def asking_for_bass_v(message):
+    mcfn = './stuff/' + str(message.chat.first_name)
+    if not message.text.isdigit():
+        bot.send_message(message.chat.id, 'Цифра нужна, братан')
+
+    if int(message.text) < 1 or int(message.text) > 100:
+        bot.send_message(message.chat.id, 'От 1 до 100, братан')
+
+    else:
+        print(message.text)
+        bass(message.text, mcfn + '_voice.wav', mcfn + '_voiceb.wav')
+        convert_to(mcfn + '_voiceb.wav', mcfn + '_send.ogg')
+        voice = open(mcfn + '_send.ogg', 'rb')
+        bot.send_voice(message.chat.id, voice)
+        dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_DOWNLOAD.value)
+
+
+@bot.message_handler(func=lambda message: dbworker.get_current_state(message.chat.id) == config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value)
+def asking_for_bass_a(message):# Не DRY, Стыдно...
+    tries = 0
+    mcfn = './stuff/' + str(message.chat.first_name)
+    if tries > 2:
+        bot.send_message(message.chat.id, 'ну ты ебан?')
+    if not message.text.isdigit():
+        bot.send_message(message.chat.id, 'Цифра нужна, братан')
+        tries += 1
+        return
+    if int(message.text) < 1 or int(message.text) > 100:
+        bot.send_message(message.chat.id, 'От 1 до 100, братан')
+        tries += 1
+    else:
+        print(message.text)
+        bass(message.text, mcfn + '_dwnld.wav', mcfn + '_dwnldb.wav')
+        convert_to(mcfn + '_dwnldb.wav', mcfn + '_send.mp3')
+        audio = open(mcfn + '_send.mp3', 'rb')
+        bot.send_audio(message.chat.id, audio)
+        dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_DOWNLOAD.value)
+
 bot.polling()
