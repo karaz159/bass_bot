@@ -84,7 +84,7 @@ def transform(word):
         elif i == 'h':
             shit += random.choice((i,'H'))
         elif i == 'i':
-            shit += random.choice((i,'I'))
+            shit += random.choice((i,'I', '1'))
         elif i == 'j':
             shit += random.choice((i,'J'))
         elif i == 'k':
