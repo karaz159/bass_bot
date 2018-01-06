@@ -109,6 +109,10 @@ def cmd_reset(message):
     bot.send_message(message.chat.id, "Начнем заново, че пацаны, бассбуст?")
     dbworker.set_state(message.chat.id, config.States.S_START.value)
 ###########################################################################################################
+@bot.message_handler(commands=["info"])
+def cmd_reset(message):
+    bot.send_message(message.chat.id, "Все, что нужно, так это бросить мне аудиофайл или голосовуху")
+###########################################################################################################
 @bot.message_handler(func=lambda message: dbworker.get_current_state(message.chat.id) == config.States.S_START.value)
 def user_manual(message):
     # В случае с именем не будем ничего проверять, пусть хоть "25671", хоть Евкакий
