@@ -73,7 +73,7 @@ def start(message):
         bot.send_message(message.chat.id, "Хм, что то пошло не так, на твоем бы месте я бы рассказал автору как ты этого добился")
 
     elif state == config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value:
-        bot.send_voice(message.chat.id, hm)
+        bot.send_voice(message.chat.id, hm) #:)
 
     else:  # Под "остальным" понимаем состояние "0" - начало диалога
         bot.send_message(message.chat.id, 'че пацаны, бассбуст?')
