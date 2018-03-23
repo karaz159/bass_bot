@@ -15,10 +15,17 @@ def bass(how_many,inn,outt):
 
 def write_log(log):
     time = datetime.now()
-    a_time = ('[' + str(time.hour) + ':' + str(time.minute) + '] ')
+    a_time = ('[' str(time.day) + '.' + str(time.month) + '.' + str(time.year) + ' ' + str(time.hour) + ':' + str(time.minute) + '] ')
     TF = open('log.txt', 'a', encoding = 'utf-8')
     TF.write(a_time + log + '\n')
     TF.close()
+
+#def report_an-update():
+#    try:
+#        update = open('report.txt', mode='r', encoding='utf-8')
+#        for user in
+######WIP Need to replace vedis? other bot
+
 
 def listener(messages):#достаточно полезная вещь, можно использовать как лог
     """
@@ -88,7 +95,7 @@ class WebhookServer(object):
 ##########################################################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
-    state = dbworker.get_current_state(message.chat.id)
+    state = dbworker.get_current_state(message.chat.id, message)
     if state == config.States.S_ASKING_FOR_DOWNLOAD.value:
         bot.send_message(message.chat.id, "Я посвятил тебя уже во все, что можно, братан")
 
@@ -102,7 +109,7 @@ def start(message):
         bot.send_voice(message.chat.id, hm)
 
     else:  # Под "остальным" понимаем состояние "0" - начало диалога
-        bot.send_message(message.chat.id, 'че пацаны, бассбуст?')
+        bot.send_message(message.chat.id, 'че пацаны, бассбуст? Краткий тутор доступен через /info')
         dbworker.set_state(message.chat.id, config.States.S_START.value)
 ###########################################################################################################
 @bot.message_handler(commands=["reset"])
@@ -113,6 +120,7 @@ def cmd_reset(message):
 @bot.message_handler(commands=["info"])
 def cmd_reset(message):
     bot.send_message(message.chat.id, "Все, что нужно, так это бросить мне аудиофайл или голосовуху")
+    bot.send_document(message.chat.id, './pic/tutor.gif')
 ###########################################################################################################
 @bot.message_handler(func=lambda message: dbworker.get_current_state(message.chat.id) == config.States.S_START.value)
 def user_manual(message):
