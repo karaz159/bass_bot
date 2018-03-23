@@ -1,5 +1,8 @@
 # <p align="center">BassBot
-This bot will B00$T ur audios, voice messages , etc
-![Output sample](https://github.com/ajasmin/camstudio-mousedown-highlight/raw/master/android_vid_test.gif)
+=========
+This bot will B00$T your audios and voice messages.
+![Output sample](https://github.com/karaz159/bass_bot/blob/master/pic/tutor.gif)
+
 Bot is avialible at https://t.me/Baasss_bot
+
 Enjoy!
