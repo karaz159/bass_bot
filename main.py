@@ -119,7 +119,7 @@ def cmd_reset(message):
 ###########################################################################################################
 @bot.message_handler(commands=["info"])
 def cmd_reset(message):
-    tutor = open('./pic/tutor.mp4', 'r')
+    tutor = open('./pic/tutor.mp4', 'rb')
     bot.send_message(message.chat.id, "Все, что нужно, так это бросить мне аудиофайл или голосовуху")
     bot.send_video(message.chat.id, tutor)
 ###########################################################################################################
