@@ -15,7 +15,7 @@ def bass(how_many,inn,outt):
 
 def write_log(log):
     time = datetime.now()
-    a_time = ('[' str(time.day) + '.' + str(time.month) + '.' + str(time.year) + ' ' + str(time.hour) + ':' + str(time.minute) + '] ')
+    a_time = ('[' + str(time.day) + '.' + str(time.month) + '.' + str(time.year) + ' ' + str(time.hour) + ':' + str(time.minute) + '] ')
     TF = open('log.txt', 'a', encoding = 'utf-8')
     TF.write(a_time + log + '\n')
     TF.close()
