@@ -3,7 +3,7 @@ import config
 import telebot as tb
 import config
 
-bot = telebot.TeleBot(config.token)
+bot = tb.TeleBot(config.token)
 
 # Пытаемся узнать из базы «состояние» пользователя
 def get_current_state(user_id,message):
