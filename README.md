@@ -6,8 +6,8 @@ This bot will add bass to your audios and voice messages depending on your choic
 
 Bot is avialible at https://t.me/Baasss_bot
 
+Enjoy!
+
 # TODO:
 
 * Report about updates to everyone
-
-Enjoy!
