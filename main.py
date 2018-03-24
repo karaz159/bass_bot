@@ -119,8 +119,9 @@ def cmd_reset(message):
 ###########################################################################################################
 @bot.message_handler(commands=["info"])
 def cmd_reset(message):
+    tutor = open('./pic/tutor.mp4', 'r')
     bot.send_message(message.chat.id, "Все, что нужно, так это бросить мне аудиофайл или голосовуху")
-    bot.send_document(message.chat.id, './pic/tutor.gif')
+    bot.send_video(message.chat.id, tutor)
 ###########################################################################################################
 @bot.message_handler(func=lambda message: dbworker.get_current_state(message.chat.id) == config.States.S_START.value)
 def user_manual(message):
