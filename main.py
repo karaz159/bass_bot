@@ -69,7 +69,7 @@ bot = tb.TeleBot(TOKEN)
 bot.set_update_listener(listener)
 ###########################################################################################################
 WEBHOOK_HOST = '46.173.214.150'
-WEBHOOK_PORT = 443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
+WEBHOOK_PORT = 8443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
 WEBHOOK_LISTEN = '0.0.0.0'  # На некоторых серверах придется указывать такой же IP, что и выше
 
 WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Путь к сертификату
@@ -95,7 +95,7 @@ class WebhookServer(object):
 ##########################################################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
-    state = dbworker.get_current_state(message.chat.id, message)
+    state = dbworker.get_current_state(message.chat.id)
     if state == config.States.S_ASKING_FOR_DOWNLOAD.value:
         bot.send_message(message.chat.id, "Я посвятил тебя уже во все, что можно, братан")
 
