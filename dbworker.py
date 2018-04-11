@@ -21,23 +21,16 @@ def users_base():
     except FileNotFoundError:
         bot.send_message(config.karaz159, 'DATABASE NOT FOUND BOUYSSSSS', disable_web_page_preview=None, reply_to_message_id=None, reply_markup=None, parse_mode=None, disable_notification=None)
         return config.karaz159
-    
 # Пытаемся узнать из базы «состояние» пользователя
-<<<<<<< HEAD
-def get_current_state(user_id):
 =======
 def get_current_state(message):
->>>>>>> a57fce8ac8fb240444b15022465f933b4f222a00
     with Vedis(config.db_file) as db:
         try:
             return db[message.chat.id]
         except KeyError:  # Если такого ключа почему-то не оказалось
-<<<<<<< HEAD
-            #bot.forward_message(config.karaz159, message.chat.id, message.message_id)
-=======
+            bot.forward_message(config.karaz159, message.chat.id, message.message_id)
             conservate(message.chat.id)
             bot.forward_message(config.karaz159, message.chat.id, message.message_id)
->>>>>>> a57fce8ac8fb240444b15022465f933b4f222a00
             return config.States.S_START.value  # значение по умолчанию - начало диалога
 
 # Сохраняем текущее «состояние» пользователя в нашу базу
