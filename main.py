@@ -114,11 +114,7 @@ class WebhookServer(object):
 ##########################################################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
-<<<<<<< HEAD
-    state = dbworker.get_current_state(message.chat.id)
-=======
     state = dbworker.get_current_state(message)
->>>>>>> 3a8d45dfd9701c3fd2eedeb81ee626ac3c099052
     if state == config.States.S_ASKING_FOR_DOWNLOAD.value:
         bot.send_message(message.chat.id, "Я посвятил тебя уже во все, что можно, братан")
 
