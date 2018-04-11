@@ -4,6 +4,7 @@ from sys import argv
 import telebot as tb
 from datetime import datetime
 from os import system as sys
+from os import remove as rm
 from time import sleep
 import dbworker, config, tekst, eyed3, cherrypy, pickle
 
@@ -19,12 +20,13 @@ else:
 #/////ТЕСТ РЕЖИМ/////
 
 
+
 def changelog():
     try:
-        change = open('changelog.txt', mode='r', encoding='utf-8')
-        return change.read()
+        if change = open('changelog.txt', mode='r', encoding='utf-8'):
+            return change.read()
     except FileNotFoundError:
-        pass
+        return False
 
 def bass(how_many,inn,outt):
     apply_af = af().lowshelf(how_many)
@@ -49,8 +51,12 @@ def read_db():
         return [config.karaz159]
 
 def report_an_update():
-   for user in read_db():
-        bot.send_message(user, changelog(), disable_notification=True)
+    if changelog():
+        for user in read_db():
+            bot.send_message(user, changelog(), disable_notification=True)
+            rm('changelog.txt')
+    else:
+        pass
 ######WIP Need to replace vedis? other bot
 
 def listener(messages):#достаточно полезная вещь, можно использовать как лог
