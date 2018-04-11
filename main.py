@@ -114,7 +114,7 @@ class WebhookServer(object):
 ##########################################################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
-    state = dbworker.get_current_state(message.chat.id, message)
+    state = dbworker.get_current_state(message)
     if state == config.States.S_ASKING_FOR_DOWNLOAD.value:
         bot.send_message(message.chat.id, "Я посвятил тебя уже во все, что можно, братан")
 
@@ -142,7 +142,7 @@ def cmd_reset(message):
     bot.send_message(message.chat.id, "Все, что нужно, так это бросить мне аудиофайл или голосовуху")
     bot.send_video(message.chat.id, tutor)
 ###########################################################################################################
-@bot.message_handler(func=lambda message: dbworker.get_current_state(message.chat.id) == config.States.S_START.value)
+@bot.message_handler(func=lambda message: dbworker.get_current_state(message) == config.States.S_START.value)
 def user_manual(message):
     # В случае с именем не будем ничего проверять, пусть хоть "25671", хоть Евкакий
     bot.send_message(message.chat.id, "Все, что тебе нужно, так это кинуть голосовуху или аудиозапись")
@@ -175,7 +175,7 @@ def get_voice(message):
     else:
         bot.send_message(message.chat.id, 'СЛИШКОМ много болтовни, телеграм не позволяет скачать')
 ###########################################################################################################
-@bot.message_handler(func=lambda message: dbworker.get_current_state(message.chat.id) == config.States.S_ASKING_FOR_BASS_POWER_VOICE.value)
+@bot.message_handler(func=lambda message: dbworker.get_current_state(message) == config.States.S_ASKING_FOR_BASS_POWER_VOICE.value)
 def asking_for_bass_v(message):
     mcfn = './stuff/' + str(message.chat.first_name)
     if not message.text.isdigit():
@@ -192,7 +192,7 @@ def asking_for_bass_v(message):
         bot.send_voice(message.chat.id, voice)
         dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_DOWNLOAD.value)
 ###########################################################################################################
-@bot.message_handler(func=lambda message: dbworker.get_current_state(message.chat.id) == config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value)
+@bot.message_handler(func=lambda message: dbworker.get_current_state(message) == config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value)
 def asking_for_bass_a(message):# Не DRY, Стыдно...
     tries = 0
     mcfn = './stuff/' + str(message.chat.first_name)
