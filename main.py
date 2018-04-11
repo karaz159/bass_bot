@@ -23,8 +23,8 @@ else:
 
 def changelog():
     try:
-        if change = open('changelog.txt', mode='r', encoding='utf-8'):
-            return change.read()
+        change = open('changelog.txt', mode='r', encoding='utf-8'):
+        return change.read()
     except FileNotFoundError:
         return False
 
