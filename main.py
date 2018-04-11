@@ -18,6 +18,12 @@ else:
     from config import token as TOKEN
 #/////ТЕСТ РЕЖИМ/////
 
+###########################################################################################################
+bot = tb.TeleBot(TOKEN)
+bot.set_update_listener(listener)
+report_an_update()
+###########################################################################################################
+
 def changelog():
     try:
         change = open('changelog.txt', mode='r', encoding='utf-8')
@@ -44,7 +50,7 @@ def read_db():
         db.close()
         return users
     except FileNotFoundError:
-        tb.send_message(config.karaz159, 'DATABASE NOT FOUND ERROR')
+        bot.send_message(config.karaz159, 'DATABASE NOT FOUND ERROR')
         return [config.karaz159]
 
 def report_an_update():
@@ -89,10 +95,6 @@ def convert_to(inn, out):
     sys('ffmpeg -y -loglevel quiet -i '+ inn + ' ' + out) #Конвертирую inn в ваф файл для дальнейшей работы
 
 hm = open('voice.ogg', 'rb')
-###########################################################################################################
-bot = tb.TeleBot(TOKEN)
-bot.set_update_listener(listener)
-###########################################################################################################
 WEBHOOK_HOST = '46.173.214.150'
 WEBHOOK_PORT = 8443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
 WEBHOOK_LISTEN = '0.0.0.0'  # На некоторых серверах придется указывать такой же IP, что и выше
@@ -232,7 +234,6 @@ bot.remove_webhook()
 bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
                 certificate=open(WEBHOOK_SSL_CERT, 'r'))
 
-report_an_update()
 
 cherrypy.config.update({
     'server.socket_host': WEBHOOK_LISTEN,
