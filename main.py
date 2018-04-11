@@ -1,11 +1,22 @@
 #!/usr/bin/env python3
 from pysndfx import AudioEffectsChain as af
+from sys import argv
 import telebot as tb
 from datetime import datetime
 from os import system as sys
-from config import token as TOKEN
 from time import sleep
-import dbworker, config, tekst, eyed3, cherrypy
+import dbworker, config, tekst, eyed3, cherrypy, pickle
+
+#/////ТЕСТ РЕЖИМ/////
+for arg in argv:
+    if arg == '-t':
+        T_FLAG = True
+
+if T_FLAG:
+    from config2 import token as TOKEN
+else:
+    from config import token as TOKEN
+#/////ТЕСТ РЕЖИМ/////
 
 def bass(how_many,inn,outt):
 
@@ -20,10 +31,18 @@ def write_log(log):
     TF.write(a_time + log + '\n')
     TF.close()
 
-#def report_an-update():
-#    try:
-#        update = open('report.txt', mode='r', encoding='utf-8')
-#        for user in
+def read_db():
+    try:
+        db = open(users.dat, mode='rb')
+        return pickle.load(db)
+    except FileNotFoundError:
+        tb.send_message(config.karaz159, 'DATABASE NOT FOUND ERROR')
+        return False
+
+##IDEA#def report_an_update():
+#    if read_db():
+#       for user in read_db():
+#            bot.send_message(user, report,disable_notification=True)
 ######WIP Need to replace vedis? other bot
 
 

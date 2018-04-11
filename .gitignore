@@ -2,7 +2,7 @@
 *.wav
 *.mp3
 *.txt
-config.py
+config*.py
 __pycache__
 /stuff
 database.vdb
