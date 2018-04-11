@@ -18,8 +18,14 @@ else:
     from config import token as TOKEN
 #/////ТЕСТ РЕЖИМ/////
 
-def bass(how_many,inn,outt):
+def changelog():
+    try:
+        change = open('changelog.txt', mode='r', encoding='utf-8')
+        return change.read()
+    except FileNotFoundError:
+        pass
 
+def bass(how_many,inn,outt):
     apply_af = af().lowshelf(how_many)
     apply_af(inn, outt)
     print ('BASS done')
@@ -33,18 +39,18 @@ def write_log(log):
 
 def read_db():
     try:
-        db = open(users.dat, mode='rb')
-        return pickle.load(db)
+        db = open('./stuff/users.dat', mode='rb')
+        users = pickle.load(db)
+        db.close()
+        return users
     except FileNotFoundError:
         tb.send_message(config.karaz159, 'DATABASE NOT FOUND ERROR')
-        return False
+        return [config.karaz159]
 
-##IDEA#def report_an_update():
-#    if read_db():
-#       for user in read_db():
-#            bot.send_message(user, report,disable_notification=True)
+def report_an_update():
+   for user in read_db():
+        bot.send_message(user, changelog(), disable_notification=True)
 ######WIP Need to replace vedis? other bot
-
 
 def listener(messages):#достаточно полезная вещь, можно использовать как лог
     """
