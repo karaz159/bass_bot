@@ -11,3 +11,5 @@ Enjoy!
 # TODO:
 
 * Report about updates to everyone
+
+* Add gifs and pics to database so user will not download every gif
