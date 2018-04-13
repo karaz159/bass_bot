@@ -1,5 +1,0 @@
-кху-кху
-Added some fix, you can found it [here](https://github.com/karaz159/bass_bot/tree/master)
-**BIG UPDATES ARE COMING**
-*bug fixies too*
-![alternate text](https://sourceforge.net/images/icon_linux.gif)
