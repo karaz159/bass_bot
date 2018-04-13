@@ -13,7 +13,7 @@ for arg in argv:
     if arg == '-t':
         T_FLAG = True
     else:
-	T_FLAG = False
+        T_FLAG = False
 
 if T_FLAG:
     from config2 import token as TOKEN
