@@ -12,6 +12,8 @@ import dbworker, config, tekst, eyed3, cherrypy, pickle
 for arg in argv:
     if arg == '-t':
         T_FLAG = True
+    else:
+        T_FLAG = False
 
 if T_FLAG:
     from config2 import token as TOKEN
@@ -101,7 +103,7 @@ hm = open('voice.ogg', 'rb')
 ###########################################################################################################
 
 WEBHOOK_HOST = '46.173.214.150'
-WEBHOOK_PORT = 443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
+WEBHOOK_PORT = 8443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
 WEBHOOK_LISTEN = '0.0.0.0'  # На некоторых серверах придется указывать такой же IP, что и выше
 
 WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Путь к сертификату
