@@ -19,8 +19,6 @@ else:
     from config import token as TOKEN
 #/////ТЕСТ РЕЖИМ/////
 
-
-
 def changelog():
     try:
         change = open('changelog.txt', mode='r', encoding='utf-8')
