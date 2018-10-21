@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
+import config2 as config
 from pysndfx import AudioEffectsChain as af
 import telebot as tb
 from datetime import datetime
 from os import system as sys
 from os import remove as rm
-from time import sleep
-import dbworker, config, tekst, eyed3, cherrypy
+import tekst, eyed3, cherrypy, argparse
 from random import randint
 from config import token as TOKEN
-#необходимо добавить пакет sysargv для тест режима
+
 
 def bass(inn,outt):
     apply_af = af().lowshelf(randint(25,100))
@@ -58,13 +58,15 @@ def download_file(message, name):
 def convert_to(inn, out):
     sys('ffmpeg -y -loglevel quiet -i '+ inn + ' ' + out) #Конвертирую inn в ваф файл для дальнейшей работы
 
-###########################################################################################################
+##########################################################################################################
+parser = argparse.ArgumentParser()
+parser.parse_args()
 bot = tb.TeleBot(TOKEN)
 bot.set_update_listener(listener)
-hm = open('voice.ogg', 'rb')
+hm = open('./stuff/voice.ogg', 'rb')
 ###########################################################################################################
 
-WEBHOOK_HOST = '178.32.56.221'
+WEBHOOK_HOST = '178.32.56.22'
 WEBHOOK_PORT = 8443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
 WEBHOOK_LISTEN = '0.0.0.0'  # На некоторых серверах придется указывать такой же IP, что и выше
 
