@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import config2 as config
 from pysndfx import AudioEffectsChain as af
 import telebot as tb
 from datetime import datetime
@@ -7,8 +6,15 @@ from os import system as sys
 from os import remove as rm
 import tekst, eyed3, cherrypy, argparse
 from random import randint
-from config import token as TOKEN
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", help="run without server, using different creds")
+args = parser.parse_args()
+
+if args.t:
+	import config2 as config
+else:
+	import config
 
 def bass(inn,outt):
     apply_af = af().lowshelf(randint(25,100))
@@ -59,9 +65,7 @@ def convert_to(inn, out):
     sys('ffmpeg -y -loglevel quiet -i '+ inn + ' ' + out) #Конвертирую inn в ваф файл для дальнейшей работы
 
 ##########################################################################################################
-parser = argparse.ArgumentParser()
-parser.parse_args()
-bot = tb.TeleBot(TOKEN)
+bot = tb.TeleBot(config.token)
 bot.set_update_listener(listener)
 hm = open('./stuff/voice.ogg', 'rb')
 ###########################################################################################################
@@ -74,7 +78,7 @@ WEBHOOK_SSL_CERT = './webhook_cert.pem' # Путь к сертификату
 WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Путь к приватному ключу
 
 WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
-WEBHOOK_URL_PATH = "/%s/" % (TOKEN)
+WEBHOOK_URL_PATH = "/%s/" % (config.token)
 
 class WebhookServer(object):
     @cherrypy.expose
@@ -94,7 +98,7 @@ class WebhookServer(object):
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, 'че пацаны, бассбуст? Краткий тутор доступен через /info')
-    dbworker.set_state(message.chat.id, config.States.S_START.value)
+#    dbworker.set_state(message.chat.id, config.States.S_START.value)
 ###########################################################################################################
 @bot.message_handler(commands=["info"])
 def cmd_reset(message):
@@ -125,7 +129,7 @@ def get_audio(message):
     else:
         bot.send_message(message.chat.id, 'Файлик слишком большой, прости, золотце')
 ###########################################################################################################
-@bot.message_handler(content_types=['voice'])
+#@bot.message_handler(content_types=['voice'])
 def get_voice(message):
     mcfn = './stuff/' + str(message.chat.first_name)
     bot.send_message(message.chat.id, 'эт войс, я погромист, меня не обманешь')
@@ -139,7 +143,7 @@ def get_voice(message):
     else:
         bot.send_message(message.chat.id, 'СЛИШКОМ много болтовни, телеграм не позволяет скачать')
 ###########################################################################################################
-@bot.message_handler(func=lambda message: dbworker.get_current_state(message) == config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value)
+#@bot.message_handler(func=lambda message: dbworker.get_current_state(message) == config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value)
 def asking_for_bass_a(message):# Не DRY, Стыдно...
     tries = 0
     mcfn = './stuff/' + str(message.chat.first_name)
@@ -156,12 +160,10 @@ def asking_for_bass_a(message):# Не DRY, Стыдно...
     fille.tag.save()
     audio = open(mcfn + '_send.mp3', 'rb')
     bot.send_audio(message.chat.id, audio)
-    dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_DOWNLOAD.value)
+#    dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_DOWNLOAD.value)
 
-bot.remove_webhook()
+#	bot.remove_webhook()
 
-bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
-                certificate=open(WEBHOOK_SSL_CERT, 'r'))
 
 cherrypy.config.update({
     'server.socket_host': WEBHOOK_LISTEN,
@@ -170,4 +172,11 @@ cherrypy.config.update({
     'server.ssl_certificate': WEBHOOK_SSL_CERT,
     'server.ssl_private_key': WEBHOOK_SSL_PRIV
 })
-cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
+if args.t:
+	print("yup, got test")
+	bot.polling()
+else:
+	print ("omg")
+	bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
+	certificate=open(WEBHOOK_SSL_CERT, 'r'))
+	cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
