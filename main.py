@@ -4,7 +4,7 @@ import telebot as tb
 from datetime import datetime
 from os import system as sys
 from os import remove as rm
-import tekst, eyed3, cherrypy, argparse
+import tekst, eyed3, cherrypy, argparse, sqlworker, sqlite3
 from random import randint
 
 parser = argparse.ArgumentParser()
@@ -12,9 +12,9 @@ parser.add_argument("-t", help="run without server, using different creds")
 args = parser.parse_args()
 
 if args.t:
-	import config2 as config
+    import config2 as config
 else:
-	import config
+    import config
 
 def bass(inn,outt):
     apply_af = af().lowshelf(randint(25,100))
@@ -64,12 +64,9 @@ def download_file(message, name):
 def convert_to(inn, out):
     sys('ffmpeg -y -loglevel quiet -i '+ inn + ' ' + out) #Конвертирую inn в ваф файл для дальнейшей работы
 
-##########################################################################################################
 bot = tb.TeleBot(config.token)
 bot.set_update_listener(listener)
 hm = open('./stuff/voice.ogg', 'rb')
-###########################################################################################################
-
 WEBHOOK_HOST = '178.32.56.22'
 WEBHOOK_PORT = 8443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
 WEBHOOK_LISTEN = '0.0.0.0'  # На некоторых серверах придется указывать такой же IP, что и выше
@@ -94,18 +91,31 @@ class WebhookServer(object):
             return ''
         else:
             raise cherrypy.HTTPError(403)
-##########################################################################################################
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, 'че пацаны, бассбуст? Краткий тутор доступен через /info')
-#    dbworker.set_state(message.chat.id, config.States.S_START.value)
-###########################################################################################################
-@bot.message_handler(commands=["info"])
+    state = str(sqlworker.get_current_state(message))
+    print ("the state is " + state)
+    if state == config.States.ASKING_FOR_DOWNLOAD:
+        bot.send_message(message.chat.id, "Я посвятил тебя уже во все, что можно, братан")
+
+    elif state == config.States.GOT_AUDIO:
+        bot.send_message(message.chat.id, "Хм, что то пошло не так, на твоем бы месте я бы рассказал автору как ты этого добился")
+
+    elif state == config.States.GOT_VOICE:
+        bot.send_message(message.chat.id, "Хм, что то пошло не так, на твоем бы месте я бы рассказал автору как ты этого добился")
+
+    #elif state == config.States.ASKING_FOR_BASS_POWER_AUDIO.value:
+    #    bot.send_voice(message.chat.id, hm)
+
+    else:  # Под "остальным" понимаем состояние "0" - начало диалога
+        bot.send_message(message.chat.id, 'че пацаны, бассбуст? Краткий тутор доступен через /info')
+        sqlworker.register_dude(message.chat.id)
+
 def cmd_reset(message):
     tutor = open('./pic/tutor.mp4', 'rb')
     bot.send_message(message.chat.id, "Все, что нужно, так это бросить мне аудиофайл или голосовуху")
     bot.send_video(message.chat.id, tutor)
-###########################################################################################################
+
 @bot.message_handler(content_types=['audio'])
 def get_audio(message):
     mcfn = './stuff/' + str(message.chat.first_name)
@@ -129,7 +139,7 @@ def get_audio(message):
     else:
         bot.send_message(message.chat.id, 'Файлик слишком большой, прости, золотце')
 ###########################################################################################################
-#@bot.message_handler(content_types=['voice'])
+@bot.message_handler(content_types=['voice'])
 def get_voice(message):
     mcfn = './stuff/' + str(message.chat.first_name)
     bot.send_message(message.chat.id, 'эт войс, я погромист, меня не обманешь')
@@ -162,7 +172,7 @@ def asking_for_bass_a(message):# Не DRY, Стыдно...
     bot.send_audio(message.chat.id, audio)
 #    dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_DOWNLOAD.value)
 
-#	bot.remove_webhook()
+#    bot.remove_webhook()
 
 
 cherrypy.config.update({
@@ -173,10 +183,10 @@ cherrypy.config.update({
     'server.ssl_private_key': WEBHOOK_SSL_PRIV
 })
 if args.t:
-	print("yup, got test")
-	bot.polling()
+    print("yup, got test")
+    bot.polling()
 else:
-	print ("omg")
-	bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
-	certificate=open(WEBHOOK_SSL_CERT, 'r'))
-	cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
+    print ("omg")
+    bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
+    certificate=open(WEBHOOK_SSL_CERT, 'r'))
+    cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
