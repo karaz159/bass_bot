@@ -93,7 +93,7 @@ class WebhookServer(object):
             raise cherrypy.HTTPError(403)
 @bot.message_handler(commands=['start'])
 def start(message):
-    state = str(sqlworker.get_current_state(message))
+    state = sqlworker.get_current_state(message)
     print ("the state is " + state)
     if state == config.States.ASKING_FOR_DOWNLOAD:
         bot.send_message(message.chat.id, "Я посвятил тебя уже во все, что можно, братан")
@@ -103,13 +103,13 @@ def start(message):
 
     elif state == config.States.GOT_VOICE:
         bot.send_message(message.chat.id, "Хм, что то пошло не так, на твоем бы месте я бы рассказал автору как ты этого добился")
-
     #elif state == config.States.ASKING_FOR_BASS_POWER_AUDIO.value:
     #    bot.send_voice(message.chat.id, hm)
-
+    elif state == '0':
+        print("it is done")
     else:  # Под "остальным" понимаем состояние "0" - начало диалога
         bot.send_message(message.chat.id, 'че пацаны, бассбуст? Краткий тутор доступен через /info')
-        sqlworker.register_dude(message.chat.id)
+        sqlworker.register_dude(message)
 
 def cmd_reset(message):
     tutor = open('./pic/tutor.mp4', 'rb')
