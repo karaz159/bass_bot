@@ -16,8 +16,17 @@ if args.t:
 else:
     import config
 
-def bass(inn,outt):
-    apply_af = af().lowshelf(randint(25,100))
+def transform_tag(tags, final_name):
+    sartist =tekst.transform(tags.tag.artist)
+    stitle = tekst.transform(tags.tag.title)
+    fille = eyed3.load(final_name)# ставлю свои тэги
+    fille.tag.artist = sartist
+    fille.tag.title = stitle
+    fille.tag.save()
+
+
+def bass(how_many,inn,outt):
+    apply_af = af().lowshelf(how_many)
     apply_af(inn, outt)
     print ('BASS done')
 
@@ -91,10 +100,12 @@ class WebhookServer(object):
             return ''
         else:
             raise cherrypy.HTTPError(403)
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
-    state = sqlworker.get_current_state(message)
-    print ("the state is " + state)
+    state = sqlworker.get_current_state(message.chat.id)
+    print ("the state is", state)
     if state == config.States.ASKING_FOR_DOWNLOAD:
         bot.send_message(message.chat.id, "Я посвятил тебя уже во все, что можно, братан")
 
@@ -103,18 +114,45 @@ def start(message):
 
     elif state == config.States.GOT_VOICE:
         bot.send_message(message.chat.id, "Хм, что то пошло не так, на твоем бы месте я бы рассказал автору как ты этого добился")
-    #elif state == config.States.ASKING_FOR_BASS_POWER_AUDIO.value:
-    #    bot.send_voice(message.chat.id, hm)
-    elif state == '0':
+    elif state == config.States.ASKING_FOR_BASS_POWER_AUDIO:
+        bot.send_voice(message.chat.id, hm)
+
+    elif state == config.States.START:
         print("it is done")
     else:  # Под "остальным" понимаем состояние "0" - начало диалога
         bot.send_message(message.chat.id, 'че пацаны, бассбуст? Краткий тутор доступен через /info')
         sqlworker.register_dude(message)
 
+@bot.message_handler(commands=["random"])
+def change_random_state(message):
+    print (sqlworker.is_random(message.chat.id))
+    if sqlworker.is_random(message.chat.id):
+        bot.send_message(message.chat.id, "Отключаю рандомный басс!")
+        sqlworker.set_random(message.chat.id, 0)
+    else:
+        bot.send_message(message.chat.id, "Включаю рандомный басс!")
+        sqlworker.set_random(message.chat.id, 1)
+
+@bot.message_handler(commands=["transform"])
+def change_transform_state(message):
+    if sqlworker.is_transform(message.chat.id):
+        bot.send_message(message.chat.id, "Отключаю рандомные тэги!")
+        sqlworker.set_transform(message.chat.id, 0)
+    else:
+        bot.send_message(message.chat.id, "Включаю рандомные тэги!")
+        sqlworker.set_transform(message.chat.id, 1)
+
+@bot.message_handler(commands=["info"])
+def user_man(message):
+    #tutor = open('./stuff/pic/tutor.mp4', 'rb')
+    bot.send_message(message.chat.id, "Все, что нужно, так это бросить мне аудиофайл или голосовуху\nТак же возможно менять поведение бота командами /random /transform")
+    #bot.send_video(message.chat.id, tutor)
+
+@bot.message_handler(func=lambda message: sqlworker.get_current_state(message.chat.id) == config.States.START)
 def cmd_reset(message):
-    tutor = open('./pic/tutor.mp4', 'rb')
+    print("got 0")
     bot.send_message(message.chat.id, "Все, что нужно, так это бросить мне аудиофайл или голосовуху")
-    bot.send_video(message.chat.id, tutor)
+    sqlworker.set_state(message.chat.id, config.States.ASKING_FOR_DOWNLOAD)
 
 @bot.message_handler(content_types=['audio'])
 def get_audio(message):
@@ -122,20 +160,27 @@ def get_audio(message):
     bot.send_message(message.chat.id, 'эт аудио, инфа 100, Сейчас скачаю')
     if download_file(message, mcfn + '_audio'):
         print('downloaded!')
-        mcfn = './stuff/' + str(message.chat.first_name)
-        convert_to(mcfn + '_audio',mcfn + '_audio.mp3')
-        fille = eyed3.load(mcfn + '_audio.mp3') #Смотрю че там по исходным id3 тэгам
-        sartist =tekst.transform(fille.tag.artist)
-        stitle = tekst.transform(fille.tag.title)
-        convert_to(mcfn + '_audio',mcfn + '_dwnld.wav')
-        bass(mcfn + '_dwnld.wav', mcfn + '_dwnldb.wav')
-        convert_to(mcfn + '_dwnldb.wav', mcfn + '_send.mp3')
-        fille = eyed3.load(mcfn + '_send.mp3')# ставлю свои тэги
-        fille.tag.artist = sartist
-        fille.tag.title = stitle
-        fille.tag.save()
-        audio = open(mcfn + '_send.mp3', 'rb')
-        bot.send_audio(message.chat.id, audio)
+        if sqlworker.is_random(message.chat.id):
+            print("yup, random")
+            convert_to(mcfn + '_audio',mcfn + '_audio.mp3')
+            tags = eyed3.load(mcfn + '_audio.mp3')
+            convert_to(mcfn + '_audio',mcfn + '_dwnld.wav')
+            bass(randint(25,100), mcfn + '_dwnld.wav', mcfn + '_dwnldb.wav')
+            convert_to(mcfn + '_dwnldb.wav', mcfn + '_send.mp3')
+            if sqlworker.is_transform(message.chat.id):
+                transform_tag(tags, mcfn + '_send.mp3')
+            else:
+                tags_send = eyed3.load(mcfn + '_send.mp3')
+                tags_send.tag.artist = tags.tag.artist
+                tags_send.tag.title = tags.tag.title
+                tags_send.tag.save()
+            #tags.tag.save()
+            audio = open(mcfn + '_send.mp3', 'rb')
+            bot.send_audio(message.chat.id, audio)
+
+        else:
+            bot.send_message(message.chat.id, 'Скок басу? 1-100')
+            sqlworker.set_state(message.chat.id, config.States.ASKING_FOR_BASS_POWER_AUDIO)
     else:
         bot.send_message(message.chat.id, 'Файлик слишком большой, прости, золотце')
 ###########################################################################################################
@@ -146,34 +191,65 @@ def get_voice(message):
     if download_file(message, mcfn+'_voice.ogg'):
         print('downloaded!')
         convert_to(mcfn + '_voice.ogg', mcfn + '_voice.wav')
-        bass(mcfn + '_voice.wav', mcfn + '_voiceb.wav')
-        convert_to(mcfn + '_voiceb.wav', mcfn + '_send.ogg')
-        voice = open(mcfn + '_send.ogg', 'rb')
-        bot.send_voice(message.chat.id, voice)
+        if sqlworker.is_random(message.chat.id):
+            print("yup, random")
+            bass(randint(25,100), mcfn + '_voice.wav', mcfn + '_voiceb.wav')
+            convert_to(mcfn + '_voiceb.wav', mcfn + '_send.ogg')
+            voice = open(mcfn + '_send.ogg', 'rb')
+            bot.send_voice(message.chat.id, voice)
+        else:
+            bot.send_message(message.chat.id, 'Скок басу? 1-100')
+            sqlworker.set_state(message.chat.id, config.States.ASKING_FOR_BASS_POWER_VOICE)
     else:
         bot.send_message(message.chat.id, 'СЛИШКОМ много болтовни, телеграм не позволяет скачать')
 ###########################################################################################################
-#@bot.message_handler(func=lambda message: dbworker.get_current_state(message) == config.States.S_ASKING_FOR_BASS_POWER_AUDIO.value)
-def asking_for_bass_a(message):# Не DRY, Стыдно...
-    tries = 0
+@bot.message_handler(func=lambda message: sqlworker.get_current_state(message.chat.id) == config.States.ASKING_FOR_BASS_POWER_VOICE)
+def asking_for_bass_v(message):
     mcfn = './stuff/' + str(message.chat.first_name)
-    convert_to(mcfn + '_audio',mcfn + '_audio.mp3')
-    fille = eyed3.load(mcfn + '_audio.mp3') #Смотрю че там по исходным id3 тэгам
-    sartist =tekst.transform(fille.tag.artist)
-    stitle = tekst.transform(fille.tag.title)
-    convert_to(mcfn + '_audio',mcfn + '_dwnld.wav')
-    bass(message.text, mcfn + '_dwnld.wav', mcfn + '_dwnldb.wav')
-    convert_to(mcfn + '_dwnldb.wav', mcfn + '_send.mp3')
-    fille = eyed3.load(mcfn + '_send.mp3')# ставлю свои тэги
-    fille.tag.artist = sartist
-    fille.tag.title = stitle
-    fille.tag.save()
-    audio = open(mcfn + '_send.mp3', 'rb')
-    bot.send_audio(message.chat.id, audio)
-#    dbworker.set_state(message.chat.id, config.States.S_ASKING_FOR_DOWNLOAD.value)
+
+    if not message.text.isdigit():
+        bot.send_message(message.chat.id, 'Цифра нужна, братан')
+
+    elif int(message.text) < 1 or int(message.text) > 100:
+        bot.send_message(message.chat.id, 'От 1 до 100, братан')
+
+    else:
+        print(message.text)
+        bass(message.text, mcfn + '_voice.wav', mcfn + '_voiceb.wav')
+        convert_to(mcfn + '_voiceb.wav', mcfn + '_send.ogg')
+        voice = open(mcfn + '_send.ogg', 'rb')
+        bot.send_voice(message.chat.id, voice)
+        sqlworker.set_state(message.chat.id, config.States.ASKING_FOR_DOWNLOAD)
+
+
+@bot.message_handler(func=lambda message: sqlworker.get_current_state(message.chat.id) == config.States.ASKING_FOR_BASS_POWER_AUDIO)
+def asking_for_bass_a(message):# Не DRY, Стыдно...
+    mcfn = './stuff/' + str(message.chat.first_name)
+
+    if not message.text.isdigit():
+        bot.send_message(message.chat.id, 'Цифра нужна, братан')
+        return
+
+    elif int(message.text) < 1 or int(message.text) > 100:
+        bot.send_message(message.chat.id, 'От 1 до 100, братан')
+
+    else:
+        convert_to(mcfn + '_audio',mcfn + '_audio.mp3')
+
+        tags = eyed3.load(mcfn + '_audio.mp3') #Смотрю че там по исходным id3 тэгам
+        convert_to(mcfn + '_audio',mcfn + '_dwnld.wav')
+
+        bass(message.text, mcfn + '_dwnld.wav', mcfn + '_dwnldb.wav')
+        convert_to(mcfn + '_dwnldb.wav', mcfn + '_send.mp3')
+
+        if sqlworker.is_transform(message.chat.id):
+            transform_tag(tags, mcfn + '_send.mp3')
+
+        audio = open(mcfn + '_send.mp3', 'rb')
+        bot.send_audio(message.chat.id, audio)
+        sqlworker.set_state(message.chat.id, config.States.ASKING_FOR_DOWNLOAD)
 
 #    bot.remove_webhook()
-
 
 cherrypy.config.update({
     'server.socket_host': WEBHOOK_LISTEN,
