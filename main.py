@@ -53,7 +53,7 @@ def listener(messages):#достаточно полезная вещь, можн
             write_log(str(m.chat.first_name) + ' ('+ str(m.chat.id) + ') '+ 'sended voice')
 
 def download_file(message, name):
-    mcfn = './stuff/' + str(message.chat.first_name)
+    mcfn = './stuff/' + str(message.chat.id)
     try:
         if message.content_type == 'audio':
             file_info = bot.get_file(message.audio.file_id)
@@ -161,7 +161,7 @@ def cmd_reset(message):
 
 @bot.message_handler(content_types=['audio'])
 def get_audio(message):
-    mcfn = './stuff/' + str(message.chat.first_name)
+    mcfn = './stuff/' + str(message.chat.id)
     bot.send_message(message.chat.id, 'эт аудио, инфа 100, Сейчас скачаю')
     if download_file(message, mcfn + '_audio'):
         print('downloaded!')
@@ -189,9 +189,9 @@ def get_audio(message):
     else:
         bot.send_message(message.chat.id, 'Файлик слишком большой, прости, золотце')
 ###########################################################################################################
-@bot.message_handler(content_types=['voice'])
+@bot.message_handler(content_types=['voice'])## # IDEA: ОБРАБОТАТЬ НИКИ СО СПЕЙСАМИ? НУЖНО ПОДСТАВИТЬ НЕ НИКИ А НОМЕРА
 def get_voice(message):
-    mcfn = './stuff/' + str(message.chat.first_name)
+    mcfn = './stuff/' + str(message.chat.id)
     bot.send_message(message.chat.id, 'эт войс, я погромист, меня не обманешь')
     if download_file(message, mcfn+'_voice.ogg'):
         print('downloaded!')
@@ -210,7 +210,7 @@ def get_voice(message):
 ###########################################################################################################
 @bot.message_handler(func=lambda message: sqlworker.get_current_state(message.chat.id) == config.States.ASKING_FOR_BASS_POWER_VOICE)
 def asking_for_bass_v(message):
-    mcfn = './stuff/' + str(message.chat.first_name)
+    mcfn = './stuff/' + str(message.chat.id)
 
     if not message.text.isdigit():
         bot.send_message(message.chat.id, 'Цифра нужна, братан')
@@ -229,7 +229,7 @@ def asking_for_bass_v(message):
 
 @bot.message_handler(func=lambda message: sqlworker.get_current_state(message.chat.id) == config.States.ASKING_FOR_BASS_POWER_AUDIO)
 def asking_for_bass_a(message):# Не DRY, Стыдно...
-    mcfn = './stuff/' + str(message.chat.first_name)
+    mcfn = './stuff/' + str(message.chat.id)
 
     if not message.text.isdigit():
         bot.send_message(message.chat.id, 'Цифра нужна, братан')
