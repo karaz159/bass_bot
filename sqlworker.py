@@ -42,6 +42,12 @@ def register_dude(message):
     #cursor.executemany("INSERT INTO boys VALUES (?,?,?,?,?,?,?,?)", REGISTER_VALUES)
     conn.close()
 
+def reset_dude(user_id):
+    conn = sqlite3.connect('./stuff/db.sql')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE boys SET state = '0', is_random = '0', is_transform = '1'  WHERE id = " + str(user_id) )
+    conn.commit()
+    conn.close()
 def get_current_state(user_id): #sqlite3 variant
     #print('showing current state')
     conn = sqlite3.connect('./stuff/db.sql')

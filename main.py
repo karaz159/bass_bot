@@ -76,7 +76,7 @@ def convert_to(inn, out):
 bot = tb.TeleBot(config.token)
 bot.set_update_listener(listener)
 hm = open('./stuff/voice.ogg', 'rb')
-WEBHOOK_HOST = '178.32.56.22'
+WEBHOOK_HOST = '178.32.56.221'
 WEBHOOK_PORT = 8443  # 443, 80, 88 или 8443 (порт должен быть открыт!)
 WEBHOOK_LISTEN = '0.0.0.0'  # На некоторых серверах придется указывать такой же IP, что и выше
 
@@ -122,6 +122,11 @@ def start(message):
     else:  # Под "остальным" понимаем состояние "0" - начало диалога
         bot.send_message(message.chat.id, 'че пацаны, бассбуст? Краткий тутор доступен через /info')
         sqlworker.register_dude(message)
+
+@bot.message_handler(commands=['reset'])
+def reset(message):
+    bot.send_message(message.chat.id, "Восстанавливаю стандартные значения")
+    sqlworker.reset_dude(message.chat.id)
 
 @bot.message_handler(commands=["random"])
 def change_random_state(message):
