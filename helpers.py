@@ -1,8 +1,12 @@
 """
 helpers file that contain useful features
 """
+from os import system as sys
+import telebot as tb
+
 import sqlworker
-import sys
+import config
+
 
 class States:
     START = '0'  # Начало нового диалога
@@ -12,6 +16,16 @@ class States:
     ASKING_FOR_BASS_POWER_AUDIO = '4'
     ASKING_FOR_BASS_POWER_VOICE = '5'
 
+
+class User():
+    pass
+class Audio():
+    def __init__(self, audio):
+        self.mime_type = audio.mime_type
+        self.perfromer = audio.perfromer
+        self.title = audio.title
+        self.duration = audio.duration
+        self
 
 class Answers:
     got_text = 'Мне нужна голосовуха либо аудиозапись, братан /info'
@@ -48,4 +62,37 @@ def check_asking(m):
     return audio or voice
 
 def convert_to(inn, out):
-    sys('ffmpeg -y -loglevel quiet -i '+ inn + ' ' + out)
+    sys('ffmpeg -y -loglevel quiet -i '+ inn + ' ' + out) # nosec
+
+def download_file(bot, message, name):
+    """
+    downloads file via bot
+    """
+    try:
+        if message.content_type == 'audio':
+            file_info = bot.get_file(message.audio.file_id)
+
+        elif message.content_type == 'voice':
+            file_info = bot.get_file(message.voice.file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+
+        with open(name, 'wb') as new_file:
+            new_file.write(downloaded_file)
+
+        return True
+
+    except tb.apihelper.ApiException:
+        return False
+
+def listener(messages): # заменить все нахуй на логгер
+    for m in messages:
+        if m.content_type == 'text':
+            pass
+
+        elif m.content_type == 'audio':
+            # write_log(str(m.chat.first_name) + ' ('+ str(m.chat.id) + ') '+ 'sended audio')
+            pass
+
+        elif m.content_type == 'voice':
+            # write_log(str(m.chat.first_name) + ' ('+ str(m.chat.id) + ') '+ 'sended voice')
+            pass

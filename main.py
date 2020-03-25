@@ -13,7 +13,7 @@ import config2 as config
 import sqlworker
 import tekst
 from helpers import (Answers, States, check_asking, convert_to, download_video,
-                     user_started)
+                     user_started, download_file, listener, Audio)
 
 apihelper.proxy = {'https':'socks5://127.0.0.1:5555'}
 
@@ -23,6 +23,9 @@ answer = Answers
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", help="run without server, using different creds")
 args = parser.parse_args()
+
+bot = tb.TeleBot(config.token)
+bot.set_update_listener(listener)
 
 # REWRITE TO CONFIG
 # if args.t:
@@ -40,56 +43,16 @@ args = parser.parse_args()
 #     WEBHOOK_URL_PATH = "/%s/" % (config.token)
 
 def transform_tag(tags, final_name):
-    sartist =tekst.transform(tags.tag.artist)
+    sartist = tekst.transform(tags.tag.artist)
     stitle = tekst.transform(tags.tag.title)
     fille = eyed3.load(final_name)# ставлю свои тэги
     fille.tag.artist = sartist
     fille.tag.title = stitle
     fille.tag.save()
 
-def bass(how_many,inn,outt):
+def bass(how_many, inn, outt):
     apply_af = af().lowshelf(how_many)
     apply_af(inn, outt)
-    print ('BASS done')
-
-def write_log(log):
-    time = datetime.now()
-    a_time = ('[' + str(time.day) + '.' + str(time.month) + '.' + str(time.year) + ' ' + str(time.hour) + ':' + str(time.minute) + '] ')
-    TF = open(LOG_FILE, 'a', encoding = 'utf-8')
-    TF.write(a_time + log + '\n')
-    TF.close()
-
-def listener(messages): # заменить все нахуй на логгер
-    for m in messages:
-        if m.content_type == 'text':
-            write_log(str(m.chat.first_name) + " (" + str(m.chat.id) + "): " + m.text)
-
-        elif m.content_type == 'audio':
-            write_log(str(m.chat.first_name) + ' ('+ str(m.chat.id) + ') '+ 'sended audio')
-
-        elif m.content_type == 'voice':
-            write_log(str(m.chat.first_name) + ' ('+ str(m.chat.id) + ') '+ 'sended voice')
-
-def download_file(message, name):
-    mcfn = './stuff/' + str(message.chat.id)
-    try:
-        if message.content_type == 'audio':
-            file_info = bot.get_file(message.audio.file_id)
-
-        elif message.content_type == 'voice':
-            file_info = bot.get_file(message.voice.file_id)
-        downloaded_file = bot.download_file(file_info.file_path)
-
-        with open(name, 'wb') as new_file:
-            new_file.write(downloaded_file)
-
-        return True
-
-    except tb.apihelper.ApiException:
-        return False
-
-bot = tb.TeleBot(config.token)
-bot.set_update_listener(listener)
 
 class WebhookServer(object):
     @cherrypy.expose
@@ -171,18 +134,20 @@ def cmd_reset(message):
 
 @bot.message_handler(content_types=['audio'])
 def get_audio(message):
-    mcfn = './stuff/' + str(message.chat.id)
+    mcfn = f'{config.download_path}{str(message.chat.id)}'
     bot.send_message(message.chat.id, Answers.got_it)
-    if download_file(message, mcfn + '_audio'):
- 
+    audio = Audio(message.audio)
+    if download_file(bot, message, mcfn + '_audio'):
+
         if sqlworker.is_random(message.chat.id):
-            convert_to(mcfn + '_audio',mcfn + '_audio.mp3')
             tags = eyed3.load(mcfn + '_audio.mp3')
-            convert_to(mcfn + '_audio',mcfn + '_dwnld.wav')
-            bass(randint(25,100), mcfn + '_dwnld.wav', mcfn + '_dwnldb.wav')
+            convert_to(mcfn + '_audio', mcfn + '_dwnld.wav')
+            bass(randint(25, 100), mcfn + '_dwnld.wav', mcfn + '_dwnldb.wav')
             convert_to(mcfn + '_dwnldb.wav', mcfn + '_send.mp3')
+
             if sqlworker.is_transform(message.chat.id):
                 transform_tag(tags, mcfn + '_send.mp3')
+
             else:
                 tags_send = eyed3.load(mcfn + '_send.mp3')
                 tags_send.tag.artist = tags.tag.artist
@@ -192,16 +157,16 @@ def get_audio(message):
             bot.send_audio(message.chat.id, audio)
 
         else:
-            bot.send_message(message.chat.id, 'Скок басу? 1-100')
+            bot.send_message(message.chat.id, Answers.num_range)
             sqlworker.set_state(message.chat.id, States.ASKING_FOR_BASS_POWER_AUDIO)
     else:
-        bot.send_message(message.chat.id, 'Файлик слишком большой, прости, золотце')
+        bot.send_message(message.chat.id, Answers.too_much)
 
 @bot.message_handler(content_types=['voice'])
 def get_voice(message):
     mcfn = './stuff/' + str(message.chat.id)
     bot.send_message(message.chat.id, Answers.got_it)
-    if download_file(message, f"{mcfn}_voice.ogg"):
+    if download_file(bot, message, f"{mcfn}_voice.ogg"):
         convert_to(mcfn + '_voice.ogg', mcfn + '_voice.wav')
         
         if sqlworker.is_random(message.chat.id):
@@ -218,7 +183,7 @@ def get_voice(message):
 
 
 
-@bot.message_handler(func=lambda m: sqlworker.get_current_state(message.chat.id) == States.ASKING_FOR_BASS_POWER_VOICE)
+@bot.message_handler(func=lambda m: sqlworker.get_current_state(m.chat.id) == States.ASKING_FOR_BASS_POWER_VOICE)
 def asking_for_bass_v(message):
     mcfn = './stuff/' + str(message.chat.id)
 
@@ -267,17 +232,16 @@ def asking_for_bass_a(message):# Не DRY, Стыдно...
 def answer_with_info(message):
     bot.send_message(message.chat.id, answer.got_text)
 
-if args.t:
-    print("yup, got test")
-    bot.polling()
-else:
-    cherrypy.config.update({'server.socket_host': WEBHOOK_LISTEN,
-                            'server.socket_port': WEBHOOK_PORT,
-                            'server.ssl_module': 'builtin',
-                            'server.ssl_certificate': WEBHOOK_SSL_CERT,
-                            'server.ssl_private_key': WEBHOOK_SSL_PRIV})
+bot.polling()
 
-    bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
-                    certificate=open(WEBHOOK_SSL_CERT, 'r'))
+# else:
+#     cherrypy.config.update({'server.socket_host': WEBHOOK_LISTEN,
+#                             'server.socket_port': WEBHOOK_PORT,
+#                             'server.ssl_module': 'builtin',
+#                             'server.ssl_certificate': WEBHOOK_SSL_CERT,
+#                             'server.ssl_private_key': WEBHOOK_SSL_PRIV})
 
-    cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
+#     bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH,
+#                     certificate=open(WEBHOOK_SSL_CERT, 'r'))
+
+#     cherrypy.quickstart(WebhookServer(), WEBHOOK_URL_PATH, {'/': {}})
