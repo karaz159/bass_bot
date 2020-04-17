@@ -1,120 +1,64 @@
 #!/usr/bin/python3
-import config #bleh
-import sqlite3
-import telebot as tb
-from datetime import datetime
+import logging
 
-bot = tb.TeleBot(config.token)
-conn = sqlite3.connect('./stuff/db.sql')
-cursor = conn.cursor()
+from sqlalchemy import create_engine, func
+from sqlalchemy.orm import sessionmaker
 
-try:
-    cursor.execute("SELECT * FROM boys")
-except sqlite3.OperationalError:
-    cursor.execute("""CREATE TABLE boys
-          (id integer, username text, first_name text, state text,
-          is_random integer, is_transform integer, last_date text, first_date text)
-           """)
-    conn.commit()
-    bot.send_message(config.karaz159, 'there was some error with db, created new') # is there any other way to keep me in touch about this?
-conn.close()
+from config import DB_DSN
+from meta import BASE, Dude
 
-def show_db():
-    boys = []
-    try:
-        for row in cursor.execute("SELECT username FROM boys"):
-            boys += row
-        return boys
-    except sqlite3.OperationalError:
-        return "some error accured"
+ENGINE = create_engine(DB_DSN, echo=True)
 
+BASE.metadata.create_all(ENGINE)
+SESSION_FACTORY = sessionmaker(bind=ENGINE)
 
-def register_dude(message):
-    print("registring")
-    curr_time = datetime.now().strftime("%I:%M%p on %B %d, %Y")
-    REGISTER_VALUES = (str(message.chat.id), message.chat.username, message.chat.first_name, '0', '0', '1', curr_time, curr_time)
-    sql = ''' INSERT INTO BOYS VALUES (?,?,?,?,?,?,?,?)'''
-    print(REGISTER_VALUES)
-    conn = sqlite3.connect('./stuff/db.sql')
-    cursor = conn.cursor()
-    cursor.execute(sql, REGISTER_VALUES)
-    conn.commit()
-    #cursor.executemany("INSERT INTO boys VALUES (?,?,?,?,?,?,?,?)", REGISTER_VALUES)
-    conn.close()
+def register_dude(m):
+    session = SESSION_FACTORY()
+    dude = Dude(tg_user_id=m.chat.id,
+                user_name=m.chat.username,
+                first_name=m.chat.first_name)
+    session.add(dude)
+    session.commit()
+    logging.info(f"registered dude with {dude.user_id} id!")
+    session.close()
 
-def reset_dude(user_id):
-    conn = sqlite3.connect('./stuff/db.sql')
-    cursor = conn.cursor()
-    cursor.execute("UPDATE boys SET state = '0', is_random = '0', is_transform = '1'  WHERE id = " + str(user_id) )
-    conn.commit()
-    conn.close()
-def get_current_state(user_id): #sqlite3 variant
-    #print('showing current state')
-    conn = sqlite3.connect('./stuff/db.sql')
-    cursor = conn.cursor()
-    try:
-        cursor.execute("SELECT state FROM boys WHERE id = " + str(user_id))
-        return cursor.fetchone()[0]
-    except (IndexError, TypeError): # Если такого ключа почему-то не оказалось
-        return "nope"
-    conn.close()## Пытаемся узнать из базы «состояние» пользователя
+def get_user(tg_user_id):
+    """
+    Returns Dude row object
+    """
+    session = SESSION_FACTORY()
+    dude = session.query(Dude).filter_by(tg_user_id=tg_user_id).one_or_none()
+    session.close()
+    return dude
 
-# Сохраняем текущее «состояние» пользователя в нашу базу
-def set_state(user_id, value):
-    conn = sqlite3.connect('./stuff/db.sql')
-    cursor = conn.cursor()
-    try:
-        cursor.execute("UPDATE boys SET state = " + value + " WHERE id = " + str(user_id))
-        conn.commit()
-        return True
-    except sqlite3.OperationalError:
-        print('something went wrong')
-        #тут желательно как-то обработать ситуацию
-        return False
-    conn.close()
+def check_state(m, state):
+    user = get_user(m.chat.id)
+    if user:
+        return user.curr_state == state # ОПАЧА, работает
+    return False
 
-def is_random(user_id):
-    try:
-        conn = sqlite3.connect('./stuff/db.sql')
-        cursor = conn.cursor()
-        cursor.execute("SELECT is_random FROM boys WHERE id = " + str(user_id))
-        return cursor.fetchone()[0]
-    except sqlite3.OperationalError:
-        print('something went wrong')
-        #тут желательно как-то обработать ситуацию
-        return False
-    conn.close()
+def set_state(tg_user_id, value):
+    """
+    Saves current state of user.
+    """
+    session = SESSION_FACTORY()
+    dude = session.query(Dude).filter_by(tg_user_id=tg_user_id).one()
+    dude.curr_state = value
+    session.commit()
+    session.close()
 
-def set_random(user_id, value):
-    try:
-        conn = sqlite3.connect('./stuff/db.sql')
-        cursor = conn.cursor()
-        cursor.execute("UPDATE boys SET is_random = " + str(value) + " WHERE id = " + str(user_id))
-        conn.commit()
-    except sqlite3.OperationalError:
-        print('something went wrong')
-        #тут желательно как-то обработать ситуацию
-    conn.close()
-
-def is_transform(user_id):
-    try:
-        conn = sqlite3.connect('./stuff/db.sql')
-        cursor = conn.cursor()
-        cursor.execute("SELECT is_transform FROM boys WHERE id = " + str(user_id))
-        return cursor.fetchone()[0]
-    except sqlite3.OperationalError:
-        print('something went wrong')
-        #тут желательно как-то обработать ситуацию
-        return False
-    conn.close()
-
-def set_transform(user_id, value):
-    try:
-        conn = sqlite3.connect('./stuff/db.sql')
-        cursor = conn.cursor()
-        cursor.execute("UPDATE boys SET is_transform = " + str(value) + " WHERE id = " + str(user_id))
-        conn.commit()
-    except sqlite3.OperationalError:
-        print('something went wrong')
-        #тут желательно как-то обработать ситуацию
-    conn.close()
+def set_bool(tg_user_id, column, value=True):
+    """
+    Sets random power of bass flag
+    True by default.
+    """
+    session = SESSION_FACTORY()
+    dude = session.query(Dude).filter_by(tg_user_id=tg_user_id).one() # NOT_DRY
+    if column == 'transform':
+        dude.transform_eyed3 = not dude.transform_eyed3
+    elif column == 'random':
+        dude.random_bass = not dude.random_bass
+    result = dude.random_bass
+    session.commit()
+    session.close()
+    return result
