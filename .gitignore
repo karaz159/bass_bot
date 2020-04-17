@@ -7,3 +7,6 @@ __pycache__
 /stuff
 database.vdb
 *.pem
+.vscode/
+download/
+
