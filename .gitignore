@@ -2,6 +2,7 @@
 *.wav
 *.mp3
 *.txt
+*.log
 config*.py
 __pycache__
 /stuff
