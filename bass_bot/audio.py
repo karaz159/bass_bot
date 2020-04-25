@@ -46,7 +46,7 @@ class TgAudio: # Замена на filepath
                        'audio',
                        performer=tags.artist,
                        title=tags.title)
-        return cls(m.chat.id, src)
+        return cls(m.chat.id, src, 'voice')
 
     def save_tags(self):
         '''

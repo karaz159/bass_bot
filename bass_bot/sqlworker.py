@@ -65,9 +65,10 @@ def alt_bool(tg_user_id, transform=None, random=None):
     dude = get_user(tg_user_id, session=session)
     if transform:
         dude.transform_eyed3 = not dude.transform_eyed3
+        result = dude.transform_eyed3
     if random:
         dude.random_bass = not dude.random_bass
-    result = dude.random_bass
+        result = dude.random_bass
     session.commit()
     session.close()
     return result

@@ -109,25 +109,6 @@ def get_audio(m):
                state=States.asking_bass_pwr,
                last_src=audio.src_path)
 
-# @bot.message_handler(content_types=['voice'])
-# def get_voice(m):
-#     
-#     user = get_user(m.chat.id)
-#     try:
-#         voice = TgAudio.from_message(m)
-#     except: # TODO tgapiexception вроде
-#         bot.send_message(m.chat.id, Answers.too_much)
-
-#     if user.random_bass:
-#         random_power = random.randint(20, 21) # nosec
-#         voice.bass_boost(random_power)
-#         bot.send_message(m.chat.id, f'Сила: {random_power}')
-#         bot.send_voice(m.chat.id, voice.open_bass())
-
-#     else:
-#         bot.send_message(m.chat.id, Answers.how_many)
-#         set_column(m.chat.id, state=States.asking_bass_pwr)
-
 @bot.message_handler(func=lambda m: check_state(m.chat.id, States.asking_bass_pwr))
 def asking_for_bass_v(m):
     user = get_user(m.chat.id)
@@ -137,14 +118,16 @@ def asking_for_bass_v(m):
     elif int(m.text) < 1 or int(m.text) > 100:
         bot.send_message(m.chat.id, Answers.num_range)
 
+
     else:
         audio = TgAudio.from_local(m)
-        audio.transform_eyed3 = user.transform_eyed3
+        if m.audio:
+            audio.transform_eyed3 = user.transform_eyed3
         audio.bass_boost(int(m.text))
         if audio.content_type == 'audio':
             bot.send_audio(m.chat.id, audio.open_bass())
         else:
-            bot.send_voice(m.chat.id, audio.open_bass)
+            bot.send_voice(m.chat.id, audio.open_bass())
 
 # @bot.message_handler(func=lambda message: sqlworker.get_current_state(message.chat.id) == States.ASKING_FOR_BASS_POWER_AUDIO)
 # def asking_for_bass_a(message):# Не DRY, Стыдно...
