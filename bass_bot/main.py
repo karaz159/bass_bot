@@ -6,7 +6,8 @@ from telebot import apihelper
 
 from config import bot
 from helpers import yt_link_check
-from meta import Answers, States, TgAudio
+from meta import Answers, States
+from audio import TgAudio
 from server import serv_start
 from sqlworker import (alt_bool, check_state, get_user, listener,
                        register_dude, set_column)
@@ -34,15 +35,9 @@ def start(m):
         bot.send_message(m.chat.id, 'Старт уже запущен был')
 
     elif state == States.asking_for_stuff:
-        bot.send_message(m.chat.id, Answers.started_already)
+        bot.send_message(m.chat.id, 'whops')
 
-    elif state == States.got_audio:
-        bot.send_message(m.chat.id, Answers.shit_happend)
-
-    elif state == States.got_voice:
-        bot.send_message(m.chat.id, Answers.shit_happend)
-
-    elif state == States.asking_bass_pwr_mp3:
+    elif state == States.asking_bass_pwr:
         bot.send_voice(m.chat.id, Answers.hm)
 
 @bot.message_handler(commands=['reset'])
@@ -81,97 +76,61 @@ def delete_user(m):
 def user_man(message):
     bot.send_message(message.chat.id, Answers.info)
 
-@bot.message_handler(func=lambda m: check_state(m, States.start))
+@bot.message_handler(func=lambda m: check_state(m.chat.id, States.start))
 def cmd_reset(message):
     bot.send_message(message.chat.id, Answers.after_start)
-    set_state(message.chat.id, States.asking_for_stuff)
+    set_column(message.chat.id, States.asking_for_stuff)
 
-@bot.message_handler(content_types=['audio'])
+@bot.message_handler(content_types=['audio', 'voice'])
 def get_audio(m):
     """
-    React on sended audio
+    React on sended audio or voice
     """
     user = get_user(m.chat.id)
+    bot.send_message(m.chat.id, Answers.got_it)
     try:
-        audio = TgAudio(m)
+        audio = TgAudio.from_message(m)
     except:
         bot.send_audio(m.chat.id, Answers.too_much)
 
-    audio.transform_eyed3 = user.transform_eyed3
+    if audio.content_type == 'audio':
+        audio.transform_eyed3 = user.transform_eyed3
 
     if user.random_bass:
-        random_power = random.randint(5, 10)
+        random_power = random.randint(5, 10) #nosec
         bot.send_message(m.chat.id, f'пилю бас, сила: {random_power}')
         audio.bass_boost(random_power) # nosec
         bot.send_audio(m.chat.id, audio.open_bass())
-        set_column(m.chat.id, state=States.start, last_src=audio.src_path)
 
     else:
         bot.send_message(m.chat.id, Answers.num_range)
-        set_state(m.chat.id, States.asking_bass_pwr_mp3)
 
-# def get_audio(message):
-#     mcfn = f'{config.download_path}{str(message.chat.id)}'
-#     bot.send_message(message.chat.id, Answers.got_it)
-#     audio = Audio(message.audio)
-#     if download_file(bot, message, mcfn + '_audio'):
+    set_column(m.chat.id,
+               state=States.asking_bass_pwr,
+               last_src=audio.src_path)
 
-#         if sqlworker.is_random(message.chat.id):
-#             tags = eyed3.load(mcfn + '_audio.mp3')
-#             convert_to(mcfn + '_audio', mcfn + '_dwnld.wav')
-#             bass(randint(25, 100), mcfn + '_dwnld.wav', mcfn + '_dwnldb.wav')
-#             convert_to(mcfn + '_dwnldb.wav', mcfn + '_send.mp3')
+# @bot.message_handler(content_types=['voice'])
+# def get_voice(m):
+#     
+#     user = get_user(m.chat.id)
+#     try:
+#         voice = TgAudio.from_message(m)
+#     except: # TODO tgapiexception вроде
+#         bot.send_message(m.chat.id, Answers.too_much)
 
-#             if sqlworker.is_transform(message.chat.id):
-#                 transform_tag(tags, mcfn + '_send.mp3')
+#     if user.random_bass:
+#         random_power = random.randint(20, 21) # nosec
+#         voice.bass_boost(random_power)
+#         bot.send_message(m.chat.id, f'Сила: {random_power}')
+#         bot.send_voice(m.chat.id, voice.open_bass())
 
-#             else:
-#                 tags_send = eyed3.load(mcfn + '_send.mp3')
-#                 tags_send.tag.artist = tags.tag.artist
-#                 tags_send.tag.title = tags.tag.title
-#                 tags_send.tag.save()
-#             audio = open(mcfn + '_send.mp3', 'rb')
-#             bot.send_audio(message.chat.id, audio)
-
-#         else:
-#             bot.send_message(message.chat.id, Answers.num_range)
-#             sqlworker.set_state(message.chat.id, States.ASKING_FOR_BASS_POWER_AUDIO)
 #     else:
-#         bot.send_message(message.chat.id, Answers.too_much)
+#         bot.send_message(m.chat.id, Answers.how_many)
+#         set_column(m.chat.id, state=States.asking_bass_pwr)
 
-@bot.message_handler(content_types=['voice'])
-def get_voice(m):
-    bot.send_message(m.chat.id, Answers.got_it)
-    user = get_user(m.chat.id)
-    try:
-        voice = TgAudio(m)
-    except: # TODO tgapiexception вроде
-        bot.send_message(m.chat.id, Answers.too_much)
-
-    if user.random_bass:
-        random_power = random.randint(20, 21) # nosec
-        voice.bass_boost(random_power)
-        bot.send_message(m.chat.id, f'Сила: {random_power}')
-        bot.send_voice(m.chat.id, voice.open_bass())
-#     if download_file(bot, message, f"{mcfn}_voice.ogg"):
-#         convert_to(mcfn + '_voice.ogg', mcfn + '_voice.wav')
-
-#         if sqlworker.is_random(message.chat.id):
-#             bass(randint(25,100), mcfn + '_voice.wav', mcfn + '_voiceb.wav')
-#             convert_to(mcfn + '_voiceb.wav', mcfn + '_send.ogg')
-#             voice = open(mcfn + '_send.ogg', 'rb')
-#             bot.send_voice(message.chat.id, voice)
-
-    else:
-        bot.send_message(m.chat.id, Answers.how_many)
-        set_state(m.chat.id, States.asking_bass_pwr_voice)
-#     else:
-#         bot.send_message(message.chat.id, Answers.too_much)
-
-
-
-@bot.message_handler(func=lambda m: check_state(m, States.asking_bass_pwr_voice))
+@bot.message_handler(func=lambda m: check_state(m.chat.id, States.asking_bass_pwr))
 def asking_for_bass_v(m):
+    user = get_user(m.chat.id)
     if not m.text.isdigit():
         bot.send_message(m.chat.id, Answers.numbers_needed)
 
@@ -179,12 +138,13 @@ def asking_for_bass_v(m):
         bot.send_message(m.chat.id, Answers.num_range)
 
     else:
-        bass(message.text, mcfn + '_voice.wav', mcfn + '_voiceb.wav')
-        convert_to(mcfn + '_voiceb.wav', mcfn + '_send.ogg')
-        voice = open(mcfn + '_send.ogg', 'rb')
-        bot.send_voice(message.chat.id, voice)
-        sqlworker.set_state(message.chat.id, States.ASKING_FOR_DOWNLOAD)
-
+        audio = TgAudio.from_local(m)
+        audio.transform_eyed3 = user.transform_eyed3
+        audio.bass_boost(int(m.text))
+        if audio.content_type == 'audio':
+            bot.send_audio(m.chat.id, audio.open_bass())
+        else:
+            bot.send_voice(m.chat.id, audio.open_bass)
 
 # @bot.message_handler(func=lambda message: sqlworker.get_current_state(message.chat.id) == States.ASKING_FOR_BASS_POWER_AUDIO)
 # def asking_for_bass_a(message):# Не DRY, Стыдно...

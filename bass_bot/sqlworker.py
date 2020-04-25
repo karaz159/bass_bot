@@ -39,7 +39,7 @@ def check_state(tg_user_id, state) -> bool:
     '''
     user = get_user(tg_user_id)
     if user:
-        return user.curr_state == state # ОПАЧА, работает
+        return user.curr_state == state
     return False
 
 def set_column(tg_user_id, state=None, last_src=None):
@@ -86,6 +86,9 @@ def listener(messages):
             log.info(f'{m.chat.username} - sended voice')
         elif m.audio:
             log.info(f'{m.chat.username} - sended audio')
+        elif m.document:
+            log.info(f'{m.chat.username} - sended document,'
+                     ' which we dont support yet')
         dude = get_user(m.chat.id, session=session)
         if dude:
             dude.last_message_date = datetime.utcnow()
