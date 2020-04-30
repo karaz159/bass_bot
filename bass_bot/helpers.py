@@ -2,21 +2,40 @@
 helpers file that contain useful features
 """
 import re
-
 from random import choice
-from os import system as sys
+
+import youtube_dl
 
 import config
-from config import bot
+from config import bot, log
+
 
 def yt_link_check(link):
-    return re.search("(https?:\/\/[w.y]+outube.com\/watch\?v=[^\s]+)", link)
+    first = re.search("(https?:\/\/[w.y]+outube.com\/watch\?v=[^\s]+)", link)
+    second = re.search("(https?:\/\/[w.y]+outu.be\/[^\s]+)", link)
+    return first or second
 
-def download_video(link):
-    pass
 
-def prepare_file(inn, out):
-    sys(f'ffmpeg -y -loglevel quiet -i {inn} {out}') # nosec
+def my_hook(d):
+    if d['status'] == 'finished':
+        print('Done downloading, now converting ...')
+
+def download_video(link, path):
+    path += '.mp4'
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': path,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'progress_hooks': [my_hook],
+    }
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([link])
+        meta = ydl.extract_info(link, download=False)
+    return meta
 
 def download(message, name):
     """

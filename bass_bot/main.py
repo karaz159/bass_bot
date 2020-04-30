@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-# import argparse
+"""
+main module with all bot commands
+"""
 import random
 
 from telebot import apihelper
 
-from config import bot
+from config import bot, SERVER_FLAG
 from helpers import yt_link_check
 from meta import Answers, States
 from audio import TgAudio
@@ -13,11 +15,6 @@ from sqlworker import (alt_bool, check_state, get_user, listener,
                        register_dude, set_column)
 
 apihelper.proxy = {'https':'socks5://127.0.0.1:8123'}
-
-# parser = argparse.ArgumentParser()
-# parser.add_argument("-t", help="run without server, using different creds")
-# args = parser.parse_args()
-
 bot.set_update_listener(listener)
 
 @bot.message_handler(commands=['start'])
@@ -82,22 +79,23 @@ def cmd_reset(message):
     set_column(message.chat.id, States.asking_for_stuff)
 
 @bot.message_handler(content_types=['audio', 'voice'])
-def get_audio(m):
+def get_audio(m, yt_link=None):
     """
     React on sended audio or voice
     """
     user = get_user(m.chat.id)
     bot.send_message(m.chat.id, Answers.got_it)
-    try:
+
+    if yt_link:
+        audio = TgAudio.from_yt(m, yt_link)
+    else:
         audio = TgAudio.from_message(m)
-    except:
-        bot.send_audio(m.chat.id, Answers.too_much)
 
     if audio.content_type == 'audio':
         audio.transform_eyed3 = user.transform_eyed3
 
     if user.random_bass:
-        random_power = random.randint(5, 10) #nosec
+        random_power = random.randint(5, 50) #nosec
         bot.send_message(m.chat.id, f'пилю бас, сила: {random_power}')
         audio.bass_boost(random_power) # nosec
         bot.send_audio(m.chat.id, audio.open_bass())
@@ -112,16 +110,20 @@ def get_audio(m):
 @bot.message_handler(func=lambda m: check_state(m.chat.id, States.asking_bass_pwr))
 def asking_for_bass_v(m):
     user = get_user(m.chat.id)
+    this_is_yt_link = yt_link_check(m.text)
+    if this_is_yt_link:
+        get_audio(m, yt_link=this_is_yt_link[0])
+        return
+
     if not m.text.isdigit():
         bot.send_message(m.chat.id, Answers.numbers_needed)
 
     elif int(m.text) < 1 or int(m.text) > 100:
         bot.send_message(m.chat.id, Answers.num_range)
 
-
     else:
         audio = TgAudio.from_local(m)
-        if m.audio:
+        if audio.content_type == 'audio':
             audio.transform_eyed3 = user.transform_eyed3
         audio.bass_boost(int(m.text))
         if audio.content_type == 'audio':
@@ -129,40 +131,11 @@ def asking_for_bass_v(m):
         else:
             bot.send_voice(m.chat.id, audio.open_bass())
 
-# @bot.message_handler(func=lambda message: sqlworker.get_current_state(message.chat.id) == States.ASKING_FOR_BASS_POWER_AUDIO)
-# def asking_for_bass_a(message):# Не DRY, Стыдно...
-#     mcfn = './stuff/' + str(message.chat.id)
-
-#     if not message.text.isdigit():
-#         bot.send_message(message.chat.id, 'Цифра нужна, братан')
-#         return
-
-#     elif int(message.text) < 1 or int(message.text) > 100:
-#         bot.send_message(message.chat.id, 'От 1 до 100, братан')
-
-#     else:
-#         convert_to(mcfn + '_audio',mcfn + '_audio.mp3')
-
-#         tags = eyed3.load(mcfn + '_audio.mp3') #Смотрю че там по исходным id3 тэгам
-#         convert_to(mcfn + '_audio',mcfn + '_dwnld.wav')
-
-#         bass(message.text, mcfn + '_dwnld.wav', mcfn + '_dwnldb.wav')
-#         convert_to(mcfn + '_dwnldb.wav', mcfn + '_send.mp3')
-
-#         if sqlworker.is_transform(message.chat.id):
-#             transform_tag(tags, mcfn + '_send.mp3')
-
-#         audio = open(mcfn + '_send.mp3', 'rb')
-#         bot.send_audio(message.chat.id, audio)
-#         sqlworker.set_state(message.chat.id, States.ASKING_FOR_DOWNLOAD)
-
 @bot.message_handler(content_types=['text'])
 def answer_with_info(message):
-    this_is_yt_link = yt_link_check(message.text)
-    if this_is_yt_link:
-        bot.send_message(message.chat.id, 'yt_link detec')
-        return
     bot.send_message(message.chat.id, Answers.got_text)
 
-bot.polling(none_stop=True)
-# serv_start(bot)
+if SERVER_FLAG:
+    serv_start(bot)
+else:
+    bot.polling(none_stop=True)
