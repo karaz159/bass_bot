@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from config import DB_DSN, log
 from meta import BASE, Dude
 
-ENGINE = create_engine(DB_DSN, echo=True)
+ENGINE = create_engine(DB_DSN)
 
 BASE.metadata.create_all(ENGINE)
 SESSION_FACTORY = sessionmaker(bind=ENGINE)

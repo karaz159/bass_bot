@@ -99,9 +99,12 @@ class TgAudio: # Замена на filepath
         self.save_tags()
 
     def bass_boost(self, how_many):
-        strint = (f'ffmpeg -y -i {self.src_path} -af '
-                  f'bass=g={str(how_many)}:f=110:w=0.7 {self.bass_done_path}')
-        subprocess.call(strint, shell=True)
+        stream = ffmpeg.input(self.src_path)
+        stream = stream.audio.filter("bass", f=110, w=0.7, g=how_many)
+        ffmpeg.output(stream, self.bass_done_path).overwrite_output().run()
+        # strint = (f'ffmpeg -y -i {self.src_path} -af '
+                #   f'bass=g={str(how_many)}:f=110:w=0.7 {self.bass_done_path}')
+        # subprocess.call(strint, shell=True)
         if self.transform_eyed3:
             self.transform_tag()
 

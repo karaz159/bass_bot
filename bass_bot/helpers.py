@@ -33,8 +33,10 @@ def download_video(link, path):
         'progress_hooks': [my_hook],
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([link])
         meta = ydl.extract_info(link, download=False)
+        if meta['duration'] > 600:
+            raise ValueError
+        ydl.download([link])
     return meta
 
 def download(message, name):

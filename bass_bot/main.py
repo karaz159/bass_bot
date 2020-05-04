@@ -87,7 +87,11 @@ def get_audio(m, yt_link=None):
     bot.send_message(m.chat.id, Answers.got_it)
 
     if yt_link:
-        audio = TgAudio.from_yt(m, yt_link)
+        try:
+            audio = TgAudio.from_yt(m, yt_link)
+        except ValueError:
+            bot.send_message(m.chat.id, 'Слишком большой видос, 10 минут макс')
+            return
     else:
         audio = TgAudio.from_message(m)
 
@@ -133,7 +137,11 @@ def asking_for_bass_v(m):
 
 @bot.message_handler(content_types=['text'])
 def answer_with_info(message):
-    bot.send_message(message.chat.id, Answers.got_text)
+    this_is_yt_link = yt_link_check(message.text)
+    if this_is_yt_link:
+        get_audio(message, yt_link=this_is_yt_link[0])
+    else:
+        bot.send_message(message.chat.id, Answers.got_text)
 
 if SERVER_FLAG:
     serv_start(bot)
