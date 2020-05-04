@@ -7,8 +7,7 @@ from random import choice
 import youtube_dl
 
 import config
-from config import bot, log
-
+from config import bot
 
 def yt_link_check(link):
     first = re.search("(https?:\/\/[w.y]+outube.com\/watch\?v=[^\s]+)", link)
