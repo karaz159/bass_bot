@@ -1,15 +1,23 @@
 #!/usr/bin/python3
 from datetime import datetime
+from time import sleep
 
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, exc
 from sqlalchemy.orm import sessionmaker
 
 from config import DB_DSN, log
 from meta import BASE, Dude
 
 ENGINE = create_engine(DB_DSN)
+print('connecting to db ...', end='')
+while True:
+    try:
+        BASE.metadata.create_all(ENGINE)
+        break
+    except exc.OperationalError:
+        sleep(5)
+print('ok!')
 
-BASE.metadata.create_all(ENGINE)
 SESSION_FACTORY = sessionmaker(bind=ENGINE)
 
 def register_dude(m):

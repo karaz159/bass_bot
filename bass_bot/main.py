@@ -4,8 +4,6 @@ main module with all bot commands
 """
 import random
 
-from telebot import apihelper
-
 from config import bot, SERVER_FLAG
 from helpers import yt_link_check
 from meta import Answers, States
@@ -14,7 +12,6 @@ from server import serv_start
 from sqlworker import (alt_bool, check_state, get_user, listener,
                        register_dude, set_column)
 
-apihelper.proxy = {'https':'socks5://127.0.0.1:8123'}
 bot.set_update_listener(listener)
 
 @bot.message_handler(commands=['start'])

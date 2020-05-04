@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+
+  bass:
+    image: bass_bot:latest
+    volumes:
+      - /var/log/bass_bot:/var/log/bass_bot
+      - /opt/bass_bot/:/opt/bass
+    environment:
+      TOKEN: TT
+      DB_HOST: db
+      DB_PASSWORD: example
+  db:
+    image: postgres:12.2-alpine
+    environment:
+      POSTGRES_PASSWORD: example
+    volumes:
+      - /opt/bass_bot/db:/var/lib/postgresql/12.2/
