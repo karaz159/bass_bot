@@ -2,6 +2,7 @@
 helpers file that contain useful features
 """
 import re
+from os import makedirs, path
 from random import choice
 
 import youtube_dl
@@ -9,11 +10,11 @@ import youtube_dl
 import config
 from config import bot
 
+
 def yt_link_check(link):
     first = re.search("(https?:\/\/[w.y]+outube.com\/watch\?v=[^\s]+)", link)
     second = re.search("(https?:\/\/[w.y]+outu.be\/[^\s]+)", link)
     return first or second
-
 
 def my_hook(d):
     if d['status'] == 'finished':

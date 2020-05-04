@@ -3,6 +3,7 @@
 *.mp3
 *.txt
 *.log
+docker-compose.yml
 __pycache__
 /stuff
 database.vdb

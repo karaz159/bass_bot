@@ -1,8 +1,10 @@
-from os import getenv
+from os import getenv, makedirs, path
 import logging
 import telebot as tb
 
-TOKEN = '401437361:AAH4a0eiD_IUzJ4V7bMZ5qJKZSrNp435BN0'
+TOKEN = getenv('TOKEN')
+assert TOKEN
+
 DB_HOST = getenv('DB_HOST', 'localhost')
 DB_PORT = getenv('DB_PORT', '5432')
 DB_USER = getenv('DB_USER', 'postgres')
@@ -12,6 +14,7 @@ LOG = getenv('LOG', 'INFO')
 SERVER_FLAG = getenv('SERVER_FLAG', None)
 DOWNLOAD_PATH = getenv('DOWNLOAD_PATH', '/opt/bass/download/')
 BASS_PATH = getenv('BASS_PATH', "/opt/bass/boosted/")
+LOG_PATH = getenv('LOG_FOLDER', '/var/log/bass_bot/')
 
 DB_DSN = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
@@ -23,11 +26,18 @@ WEBHOOK_SSL_PRIV = './webhook_pkey.pem'
 WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
 WEBHOOK_URL_PATH = "/%s/" % (TOKEN)
 
+
+pathes = (DOWNLOAD_PATH, BASS_PATH, LOG_PATH)
+for folder in pathes:
+    if not path.exists(folder):
+        makedirs(folder)
+
+
 log = logging.getLogger('bass_boost')
 formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
 
-info_file_handler = logging.FileHandler('/var/log/bass_bot/info.log')
-error_file_handler = logging.FileHandler('/var/log/bass_bot/error.log')
+info_file_handler = logging.FileHandler(f'{LOG_PATH}info.log')
+error_file_handler = logging.FileHandler(f'{LOG_PATH}error.log')
 info_file_handler.setFormatter(formatter)
 info_file_handler.setLevel(logging.INFO)
 error_file_handler.setFormatter(formatter)
