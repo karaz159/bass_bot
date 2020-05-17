@@ -1,10 +1,12 @@
-
-import subprocess
+"""
+Module describes audio class
+allowing to set eyed3 tags, add dcb to bass, etc
+"""
+import os
 import time
 
 import eyed3
 import ffmpeg
-import os
 
 from config import BASS_PATH, DOWNLOAD_PATH
 from helpers import download, download_video, leet_translate
@@ -12,6 +14,9 @@ from sqlworker import get_user
 
 
 class TgAudio: # Замена на filepath
+    """
+    Main TgAudio class
+    """
     def __init__(self, sender_id, src_path, content_type,
                  performer=None, title=None, update_tags=False):
         self.sender_id = sender_id
@@ -32,9 +37,13 @@ class TgAudio: # Замена на filepath
 
     @classmethod
     def from_message(cls, m):
+        """
+        Make this class from message,
+        just pass message from tg
+        """
         if m.audio:
             src_path = f'{DOWNLOAD_PATH}{m.chat.id}.mp3'
-        else: 
+        else:
             src_path = f'{DOWNLOAD_PATH}{m.chat.id}.ogg'
         download(m, src_path)
         if m.audio:
@@ -47,8 +56,13 @@ class TgAudio: # Замена на filepath
 
     @classmethod
     def from_local(cls, m):
+        """
+        Make this class from local audio
+        """
         user = get_user(m.chat.id)
         src = user.last_source
+        if not os.path.exists(src):
+            raise FileNotFoundError
         if src.endswith('mp3'):
             tags = eyed3.load(src).tag
             return cls(m.chat.id,
@@ -84,10 +98,10 @@ class TgAudio: # Замена на filepath
         Updates mp3 tags using
         eyed3 lib
         '''
-        ll = eyed3.load(self.bass_done_path)
-        ll.tag.artist = self.performer
-        ll.tag.title = self.title
-        ll.tag.save()
+        loaded_audio = eyed3.load(self.bass_done_path)
+        loaded_audio.tag.artist = self.performer
+        loaded_audio.tag.title = self.title
+        loaded_audio.tag.save()
 
     def transform_tag(self):
         '''
@@ -99,14 +113,18 @@ class TgAudio: # Замена на filepath
         self.save_tags()
 
     def bass_boost(self, how_many):
+        """
+        Adds some dcb to loaded audio
+        """
         stream = ffmpeg.input(self.src_path)
-        stream = stream.audio.filter("bass", f=110, w=0.7, g=how_many)
+        stream = stream.audio.filter("bass", g=how_many)
         ffmpeg.output(stream, self.bass_done_path).overwrite_output().run()
-        # strint = (f'ffmpeg -y -i {self.src_path} -af '
-                #   f'bass=g={str(how_many)}:f=110:w=0.7 {self.bass_done_path}')
-        # subprocess.call(strint, shell=True)
+
         if self.transform_eyed3:
             self.transform_tag()
 
     def open_bass(self):
+        """
+        Returns opened in bytes audio
+        """
         return open(self.bass_done_path, 'rb')

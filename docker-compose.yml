@@ -1,8 +1,7 @@
 version: "3.8"
 services:
-
   bass:
-    image: bass_bot:latest
+    image: kz159/bass_bot:latest
     volumes:
       - /var/log/bass_bot:/var/log/bass_bot
       - /opt/bass_bot/:/opt/bass

@@ -2,14 +2,12 @@
 helpers file that contain useful features
 """
 import re
-from os import makedirs, path
 from random import choice
 
 import youtube_dl
 
-import config
 from config import bot
-
+from meta import hz, ALPHABET
 
 def yt_link_check(link):
     first = re.search("(https?:\/\/[w.y]+outube.com\/watch\?v=[^\s]+)", link)
@@ -62,10 +60,11 @@ def leet_translate(word):
     shit = ''
     if word:
         for character in word.lower():
-            try:
-                shit += choice(config.ALPHABET[character]) # nosec
-            except KeyError:
+            bad_character = ALPHABET.get(character)
+            if bad_character:
+                shit += choice(bad_character) # nosec
+            else:
                 shit += character
     else:
-        shit = choice(config.hz) # nosec
+        shit = choice(hz) # nosec
     return shit

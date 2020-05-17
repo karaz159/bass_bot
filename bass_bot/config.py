@@ -18,20 +18,18 @@ LOG_PATH = getenv('LOG_FOLDER', '/var/log/bass_bot/')
 
 DB_DSN = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
-WEBHOOK_HOST = ''
-WEBHOOK_PORT = 8443
-WEBHOOK_LISTEN = '0.0.0.0'
-WEBHOOK_SSL_CERT = './webhook_cert.pem'
-WEBHOOK_SSL_PRIV = './webhook_pkey.pem'
-WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
-WEBHOOK_URL_PATH = "/%s/" % (TOKEN)
-
+WH_HOST = getenv('WH_HOST', '')
+WH_PORT = int(getenv("WH_PORT", "8443"))
+WH_LISTEN = getenv('WH_LISTEN', '0.0.0.0')
+WH_SSL_CERT = getenv("SSL_CERT", '/certs/WH_cert.pem')
+WH_SSL_PRIV = getenv('SSL_PRIV', '/certs/WH_pkey.pem')
+WH_URL_BASE = "https://%s:%s" % (WH_HOST, WH_PORT)
+WH_URL_PATH = "/%s/" % (TOKEN)
 
 pathes = (DOWNLOAD_PATH, BASS_PATH, LOG_PATH)
 for folder in pathes:
     if not path.exists(folder):
         makedirs(folder)
-
 
 log = logging.getLogger('bass_boost')
 formatter = logging.Formatter('%(asctime)s %(levelname)s:%(message)s')
@@ -48,83 +46,3 @@ log.addHandler(error_file_handler)
 log.setLevel(LOG)
 
 bot = tb.TeleBot(TOKEN)
-
-a = ('@', 'A', 'а')
-b = ('B', '8', 'Б')
-c = ('С', 'с', 'S', '$', '$$')
-d = ('D', 'd', 'д', 'Д', 't')
-e = ('3', 'E')
-f = ('F', 'Ф')
-g = ('G', 'Г')
-h = ('Х', 'H')
-i = ('I', 'i', 'И', 'и')
-k = ('k', 'K')
-l = ('LL', 'L', 'l')
-m = ('М', 'ММ')
-n = ('н', 'Н')
-o = ('О', '0')
-r = ('r', 'R')
-t = ('Ͳ', 'Т', 'т', 't')
-v = ('V', 'В', 'v', 'в')
-z = ('ZZ', 'Z', 'z', 'З', 'з')
-hz = ('N3т', 'NE Y@sNo', '<UнKn0wн>', '4eг0')
-
-ALPHABET = {
-    'а': a,
-    'б': b,
-    'в': v,
-    'г': ('G', 'Г'),
-    'д': d,
-    'е': e,
-    'ж': ('J', 'ZH', 'ж', 'Ж'),
-    'з': z,
-    'и': i,
-    'й': i,
-    'к': k,
-    'л': l,
-    'м': m,
-    'н': n,
-    'о': o,
-    'п': ('P', '5'),
-    'р': r,
-    'с': c,
-    'т': t,
-    'у': ('у', 'Y'),
-    'ф': f,
-    'х': h,
-    'ц': ('Ц', 'С'),
-    'ч': ('Ч', 'CH', 'cH'),
-    'ш': ('SH', 'sH', 'Sh', 'Ш'),
-    'щ': ('SH', 'sH', 'Sh', 'Щ'),
-    'ъ': ('Б', 'Ъ', 'ь', 'ъ'),
-    'ы': ('bi', 'Ы'),
-    'ь': ('Б', 'Ъ', 'ь', 'ъ'),
-    'э': ('Э', 'э'),
-    'ю': ('ю', 'Ю'),
-    'я': ('я', 'Я'),
-    'a': a,
-    'b': b,
-    'c': c,
-    'd': d,
-    'e': e,
-    'f': f,
-    'g': g,
-    'h': h,
-    'i': i,
-    'j': ('j', 'J'),
-    'k': k,
-    'l': l,
-    'm': m,
-    'n': n,
-    'o': o,
-    'p': ('P', '5'),
-    'r': r,
-    's': ('S', '$$', '$'),
-    't': t,
-    'u': ('u', 'U'),
-    'v': v,
-    'w': ('w', 'W'),
-    'x': ('x', 'X', 'XX'),
-    'y': ('y', 'Y'),
-    'z': z
-}

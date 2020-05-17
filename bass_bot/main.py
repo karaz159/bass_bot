@@ -4,7 +4,9 @@ main module with all bot commands
 """
 import random
 
-from config import bot, SERVER_FLAG
+from telebot import apihelper
+
+from config import bot, log, SERVER_FLAG
 from helpers import yt_link_check
 from meta import Answers, States
 from audio import TgAudio
@@ -70,10 +72,14 @@ def delete_user(m):
 def user_man(message):
     bot.send_message(message.chat.id, Answers.info)
 
-@bot.message_handler(func=lambda m: check_state(m.chat.id, States.start))
-def cmd_reset(message):
-    bot.send_message(message.chat.id, Answers.after_start)
-    set_column(message.chat.id, States.asking_for_stuff)
+
+@bot.message_handler(func=lambda m: check_state(m.chat.id, States.downloading))
+def downloading_stuff(message):
+    bot.send_message(message.chat.id, 'Мой чувак, качаю вещи')
+
+@bot.message_handler(func=lambda m: check_state(m.chat.id, States.boosting))
+def boost_stuff(message):
+    bot.send_message(message.chat.id, 'Мой чувак, бустаю вещи')
 
 @bot.message_handler(content_types=['audio', 'voice'])
 def get_audio(m, yt_link=None):
@@ -82,12 +88,14 @@ def get_audio(m, yt_link=None):
     """
     user = get_user(m.chat.id)
     bot.send_message(m.chat.id, Answers.got_it)
+    set_column(m.chat.id, state=States.downloading)
 
     if yt_link:
         try:
             audio = TgAudio.from_yt(m, yt_link)
         except ValueError:
             bot.send_message(m.chat.id, 'Слишком большой видос, 10 минут макс')
+            set_column(m.chat.id, state=States.asking_bass_pwr)
             return
     else:
         audio = TgAudio.from_message(m)
@@ -97,6 +105,7 @@ def get_audio(m, yt_link=None):
 
     if user.random_bass:
         random_power = random.randint(5, 50) #nosec
+        set_column(m.chat.id, state=States.boosting)
         bot.send_message(m.chat.id, f'пилю бас, сила: {random_power}')
         audio.bass_boost(random_power) # nosec
         bot.send_audio(m.chat.id, audio.open_bass())
@@ -109,7 +118,7 @@ def get_audio(m, yt_link=None):
                last_src=audio.src_path)
 
 @bot.message_handler(func=lambda m: check_state(m.chat.id, States.asking_bass_pwr))
-def asking_for_bass_v(m):
+def asking_for_bass(m):
     user = get_user(m.chat.id)
     this_is_yt_link = yt_link_check(m.text)
     if this_is_yt_link:
@@ -123,14 +132,25 @@ def asking_for_bass_v(m):
         bot.send_message(m.chat.id, Answers.num_range)
 
     else:
-        audio = TgAudio.from_local(m)
-        if audio.content_type == 'audio':
-            audio.transform_eyed3 = user.transform_eyed3
-        audio.bass_boost(int(m.text))
-        if audio.content_type == 'audio':
-            bot.send_audio(m.chat.id, audio.open_bass())
+        try:
+            audio = TgAudio.from_local(m)
+        except FileNotFoundError:
+            bot.send_message(m.chat.id, Answers.file_lost)
         else:
-            bot.send_voice(m.chat.id, audio.open_bass())
+            if audio.content_type == 'audio':
+                audio.transform_eyed3 = user.transform_eyed3
+            set_column(m.chat.id, state=States.boosting)
+            audio.bass_boost(int(m.text))
+            if audio.content_type == 'audio':
+                bot.send_audio(m.chat.id, audio.open_bass())
+            else:
+                bot.send_voice(m.chat.id, audio.open_bass())
+            set_column(m.chat.id, state=States.asking_bass_pwr)
+
+@bot.message_handler(func=lambda m: check_state(m.chat.id, States.start))
+def after_start(message):
+    bot.send_message(message.chat.id, Answers.after_start)
+    set_column(message.chat.id, States.asking_for_stuff)
 
 @bot.message_handler(content_types=['text'])
 def answer_with_info(message):
@@ -140,7 +160,14 @@ def answer_with_info(message):
     else:
         bot.send_message(message.chat.id, Answers.got_text)
 
-if SERVER_FLAG:
-    serv_start(bot)
-else:
-    bot.polling(none_stop=True)
+
+if __name__ == "__main__":
+    
+    if SERVER_FLAG:
+        log.info('Running in server mode')
+        serv_start()
+    else:
+        apihelper.proxy = {'https':'socks5://127.0.0.1:8123'}
+        bot.remove_webhook()
+        log.info('running in poll mode')
+        bot.polling(none_stop=True)
