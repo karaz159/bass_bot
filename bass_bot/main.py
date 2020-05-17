@@ -75,11 +75,11 @@ def user_man(message):
 
 @bot.message_handler(func=lambda m: check_state(m.chat.id, States.downloading))
 def downloading_stuff(message):
-    bot.send_message(message.chat.id, 'Мой чувак, качаю вещи')
+    bot.send_message(message.chat.id, Answers.downloading)
 
 @bot.message_handler(func=lambda m: check_state(m.chat.id, States.boosting))
 def boost_stuff(message):
-    bot.send_message(message.chat.id, 'Мой чувак, бустаю вещи')
+    bot.send_message(message.chat.id, Answers.boosting)
 
 @bot.message_handler(content_types=['audio', 'voice'])
 def get_audio(m, yt_link=None):
