@@ -22,7 +22,6 @@ def start(m):
 
     if not user:
         bot.send_message(m.chat.id, Answers.start)
-        register_dude(m)
         return
 
     state = user.curr_state
@@ -92,12 +91,14 @@ def get_audio(m, yt_link=None):
 
     if yt_link:
         try:
+            bot.send_chat_action(m.chat.id, 'record_video')
             audio = TgAudio.from_yt(m, yt_link)
         except ValueError:
             bot.send_message(m.chat.id, 'Слишком большой видос, 10 минут макс')
             set_column(m.chat.id, state=States.asking_bass_pwr)
             return
     else:
+        bot.send_chat_action(m.chat.id, 'record_audio')
         audio = TgAudio.from_message(m)
 
     if audio.content_type == 'audio':
@@ -167,7 +168,6 @@ if __name__ == "__main__":
         log.info('Running in server mode')
         serv_start()
     else:
-        apihelper.proxy = {'https':'socks5://127.0.0.1:8123'}
         bot.remove_webhook()
         log.info('running in poll mode')
         bot.polling(none_stop=True)

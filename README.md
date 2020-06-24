@@ -8,9 +8,13 @@ Bot is avialible at https://t.me/Baasss_bot
 
 Enjoy!
 
+
+# Launch
+docker run -e
+
 # TODO:
 
-* Add gifs and pics to database so user will not download every gif
+* docker instructions
 
 #V2 Update
 * Brings two switches, /random and /transform 
