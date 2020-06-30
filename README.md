@@ -15,6 +15,7 @@ docker run -e
 # TODO:
 
 * docker instructions
+* docker autogenerate ssl cert if not provided
 
 #V2 Update
 * Brings two switches, /random and /transform 
