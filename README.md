@@ -8,10 +8,16 @@ Bot is avialible at https://t.me/Baasss_bot
 
 Enjoy!
 
+# Prepare ssl cert
+```
+openssl genrsa -out WH_pkey.pem 2048
+openssl req -new -x509 -days 3650 -key WH_pkey.pem -out WH_cert.pem
+```
 
 # Launch
-docker run -e
-
+```
+docker run -e 
+```
 # TODO:
 
 * docker instructions

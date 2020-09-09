@@ -161,9 +161,7 @@ def answer_with_info(message):
     else:
         bot.send_message(message.chat.id, Answers.got_text)
 
-
 if __name__ == "__main__":
-    
     if SERVER_FLAG:
         log.info('Running in server mode')
         serv_start()
