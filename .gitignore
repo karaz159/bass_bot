@@ -2,8 +2,13 @@
 *.wav
 *.mp3
 *.txt
-config*.py
+*.log
 __pycache__
 /stuff
 database.vdb
 *.pem
+.vscode/
+download/
+
+.python-version
+docker-compose.override.yml
