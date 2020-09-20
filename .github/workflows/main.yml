@@ -1,0 +1,50 @@
+name: Docker
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+
+env:
+  IMAGE_NAME: bass_bot
+  EVENT: ${{ github.event_name }}
+  REF: ${{ github.ref }}
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        if: github.event_name == 'push'
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Build image
+        run: |
+          docker build . --file Dockerfile --tag $IMAGE_NAME
+          
+      - name: Log into registry
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u kz159 --password-stdin
+
+      - name: Push image
+        run: |
+          VERSION=$(echo $REF | sed -e 's,.*/\(.*\),\1,')
+          IMAGE_ID=kz159/$IMAGE_NAME
+          echo VERSION $VERSION
+          
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          
+          if [ $VERSION = "dev" ]
+          then
+            VERSION="latest-dev"
+          else
+            VERSION='latest'
+          fi
+          
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
