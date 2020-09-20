@@ -1,7 +1,6 @@
 *.ogg
 *.wav
 *.mp3
-*.txt
 *.log
 __pycache__
 /stuff
