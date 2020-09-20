@@ -8,6 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 BASE = declarative_base()
 
+
 class States:
     start = 'start'
     asking_for_stuff = 'asking_for_stuff'
@@ -15,30 +16,36 @@ class States:
     downloading = 'downloading'
     boosting = 'boosting'
 
+
 class Dude(BASE):
     """
     Main dude sqlalchemy class
     """
     __tablename__ = "dudes"
 
-    user_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, primary_key=True, nullable=False)
     tg_user_id = Column(Integer, unique=True)
     user_name = Column(String)
     first_name = Column(String)
-    curr_state = Column(String, server_default=States.start)
-    random_bass = Column(Boolean, default=False)
-    transform_eyed3 = Column(Boolean, default=True)
-    last_message_date = Column(DateTime, server_default=func.now())
-    first_message_date = Column(DateTime, server_default=func.now())
+    curr_state = Column(String, server_default=States.start, nullable=False)
+    random_bass = Column(Boolean, default=False, nullable=False)
+    transform_eyed3 = Column(Boolean, default=True, nullable=False)
+    last_message_date = Column(DateTime, server_default=func.now(), nullable=False)
+    first_message_date = Column(DateTime, server_default=func.now(), nullable=False)
     last_source = Column(String, unique=True)
 
-class Answers:
+
+class Answers:  # TODO middleware
     file_lost = 'Йоу, потерялся твой файл, можешь еще раз скинуть?'
     got_text = 'Мне нужна голосовуха либо аудиозапись, братан /info'
     started_already = "Я посвятил тебя уже во все, что можно, братан"
     shit_happend = ("Хм, что то пошло не так, на твоем бы месте"
                     "я бы рассказал автору как ты этого добился")
-    hm = open('./hm.ogg', 'rb')
+    try:
+        hm = open('./hm.ogg', 'rb')
+    except FileNotFoundError:
+        pass
+
     start = 'че пацаны, бассбуст? Краткий тутор доступен через /info'
     reset = "Восстанавливаю стандартные значения"
     turn_on = "Включаю"
@@ -56,6 +63,7 @@ class Answers:
     num_range = 'От 1 до 100, братан'
     downloading = 'Мой чувак, качаю вещи'
     boosting = 'Мой чувак, бустаю вещи'
+
 
 a = ('@', 'A', 'а')
 b = ('B', '8', 'Б')

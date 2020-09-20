@@ -6,12 +6,19 @@ services:
       - /var/log/bass_bot:/var/log/bass_bot
       - /opt/bass_bot/:/opt/bass
     environment:
-      TOKEN: TT
-      DB_HOST: db
-      DB_PASSWORD: example
-  db:
-    image: postgres:12.2-alpine
-    environment:
-      POSTGRES_PASSWORD: example
-    volumes:
-      - /opt/bass_bot/db:/var/lib/postgresql/12.2/
+      TOKEN:                       # telegram-token
+      DB_HOST:                     # DB_HOST
+      DB_PORT:                     # postgresql_port
+      DB_PASSWORD:                 # postgresql_pass
+      DB_USER:                     # postgresql_user
+      DB_NAME:                     # postgresql_database_name
+      LOG: INFO
+      SERVER_FLAG: Yes if you`re not polling
+      DOWNLOAD_PATH: Path to store all downloads by bot
+#      BASS_PATH = getenv('BASS_PATH', "/opt/bass/boosted/")
+#      LOG_PATH = getenv('LOG_FOLDER', '/var/log/bass_bot/')
+
+      WH_HOST: 127.0.0.1  # webhook server, your ipv4 address or domain name, will gen cert for it!
+      WH_LISTEN: 0.0.0.0 # listen address
+      WH_PORT: 8443 # webhook port, can be 8443 443 80 88
+

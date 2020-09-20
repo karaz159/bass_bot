@@ -10,7 +10,7 @@ DB_PORT = getenv('DB_PORT', '5432')
 DB_USER = getenv('DB_USER', 'postgres')
 DB_PASSWORD = getenv("DB_PASSWORD", 'password')
 DB_NAME = getenv('DB', 'postgres')
-LOG = getenv('LOG', 'INFO')
+LOG_LEVEL = getenv('LOG_LEVEL', 'INFO')
 SERVER_FLAG = getenv('SERVER_FLAG', None)
 DOWNLOAD_PATH = getenv('DOWNLOAD_PATH', '/opt/bass/download/')
 BASS_PATH = getenv('BASS_PATH', "/opt/bass/boosted/")
@@ -19,12 +19,14 @@ LOG_PATH = getenv('LOG_FOLDER', '/var/log/bass_bot/')
 DB_DSN = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 WH_HOST = getenv('WH_HOST', '')
+
 WH_PORT = int(getenv("WH_PORT", "8443"))
 WH_LISTEN = getenv('WH_LISTEN', '0.0.0.0')
+
 WH_SSL_CERT = getenv("SSL_CERT", '/certs/WH_cert.pem')
-WH_SSL_PRIV = getenv('SSL_PRIV', '/certs/WH_pkey.pem')
+WH_SSL_PRIV = getenv('SSL_PRIV', '/certs/WH_pkey.pem')  # TODO REMOVE
 WH_URL_BASE = "https://%s:%s" % (WH_HOST, WH_PORT)
-WH_URL_PATH = "/%s/" % (TOKEN)
+WH_URL_PATH = "/%s/" % TOKEN
 
 pathes = (DOWNLOAD_PATH, BASS_PATH, LOG_PATH)
 for folder in pathes:
@@ -43,6 +45,10 @@ error_file_handler.setLevel(logging.ERROR)
 
 log.addHandler(info_file_handler)
 log.addHandler(error_file_handler)
-log.setLevel(LOG)
+log.setLevel(LOG_LEVEL)
 
 bot = tb.TeleBot(TOKEN)
+
+log.info('GOT THIS VARS'
+         f'SSL_PRIV={WH_SSL_PRIV}'
+         f'SSL_CERT={WH_SSL_CERT}')  # todo

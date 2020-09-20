@@ -37,6 +37,7 @@ def download_video(link, path):
         ydl.download([link])
     return meta
 
+
 def download(message, name):
     """
     downloads mp3 or voice via bot
@@ -52,6 +53,7 @@ def download(message, name):
         new_file.write(downloaded_file)
 
     return name
+
 
 def leet_translate(word):
     '''

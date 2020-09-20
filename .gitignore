@@ -10,3 +10,5 @@ database.vdb
 .vscode/
 download/
 
+.python-version
+docker-compose.override.yml

@@ -1,8 +1,8 @@
 #!/usr/bin/python3
-'''
+"""
 Module contains all functions that
 in some way relative to sql
-'''
+"""
 from datetime import datetime
 from time import sleep
 from contextlib import contextmanager
@@ -14,7 +14,6 @@ from config import DB_DSN, log
 from meta import BASE, Dude
 
 ENGINE = create_engine(DB_DSN)
-print('connecting to db ...', end='')
 
 while True:
     try:
@@ -24,7 +23,7 @@ while True:
         sleep(5)
 
 SESSION_FACTORY = sessionmaker(bind=ENGINE)
-print('ok!')
+
 
 @contextmanager
 def session_scope():
@@ -33,25 +32,28 @@ def session_scope():
     try:
         yield session
         session.commit()
-    except:
+    except Exception:
         session.rollback()
         raise
     finally:
         session.close()
 
-def register_dude(message) -> None:
-    '''
+
+def register_dude(message):
+    """
     Register user from message
-    '''
+    """
     dude = Dude(tg_user_id=message.chat.id,
                 user_name=message.chat.username,
                 first_name=message.chat.first_name)
+
     with session_scope() as session:
         session.add(dude)
         log.info(f"registered dude {message.chat.username} "
                  f"with {dude.user_id} id!")
 
-def get_user(tg_user_id, session=None):
+
+def get_user(tg_user_id, session=None) -> Dude:
     """
     Returns Dude row object
     """
@@ -63,15 +65,17 @@ def get_user(tg_user_id, session=None):
         dude = session.query(Dude).filter_by(tg_user_id=tg_user_id).one_or_none()
     return dude
 
+
 def check_state(tg_user_id, state) -> bool:
-    '''
+    """
     checks state of user
-    '''
+    """
     with session_scope() as session:
         user = get_user(tg_user_id, session=session)
         if user:
             return user.curr_state == state
     return False
+
 
 def set_column(tg_user_id, state=None, last_src=None):
     """
@@ -83,6 +87,7 @@ def set_column(tg_user_id, state=None, last_src=None):
             dude.curr_state = state
         if last_src:
             dude.last_source = last_src
+
 
 def alt_bool(tg_user_id, transform=None, random=None):
     # TODO Объеденить мб с верхней функцией?
@@ -99,6 +104,7 @@ def alt_bool(tg_user_id, transform=None, random=None):
             result = dude.random_bass
     return result
 
+
 def listener(messages):
     """
     listener function
@@ -108,16 +114,21 @@ def listener(messages):
     for message in messages:
         if message.text:
             log.info(f'{message.chat.username} - {message.text}')
+
         elif message.voice:
             log.info(f'{message.chat.username} - sended voice')
+
         elif message.audio:
             log.info(f'{message.chat.username} - sended audio')
+
         elif message.document:
             log.info(f'{message.chat.username} - sended document,'
                      ' which we dont support yet')
+
         with session_scope() as session:
+
             dude = get_user(message.chat.id, session=session)
             if dude:
-                dude.last_message_date = datetime.utcnow()
+                dude.last_message_date = datetime.utcnow()  # todo redo to postgresql
             else:
-                register_dude(message) # ЕСЛИ КТО ТО НЕ ЗАРЕГАН ПО БАЗЕ НО УЖЕ ПОЛЬЗОВАТЕЛЬ
+                register_dude(message)  # ЕСЛИ КТО ТО НЕ ЗАРЕГАН ПО БАЗЕ НО УЖЕ ПОЛЬЗОВАТЕЛЬ
