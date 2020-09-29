@@ -14,6 +14,9 @@ openssl genrsa -out WH_pkey.pem 2048
 openssl req -new -x509 -days 3650 -key WH_pkey.pem -out WH_cert.pem
 ```
 There`s no need for that, bass bot will generate it for you automatically if certs was not found
+# TODO
+curl to variable ip address from ifconfig.me if wh-host not presented and server flag enabled
+
 
 # Launch in polling mode
 ```
