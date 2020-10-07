@@ -18,6 +18,6 @@ COPY --from=builder /install /usr/local
 
 WORKDIR /app
 
-COPY bass_bot/ .
+COPY . .
 
 CMD ./launch.sh

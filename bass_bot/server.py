@@ -18,8 +18,6 @@ async def handle(request):
         bot.process_new_updates([update])
         return web.Response()
 
-    return web.Response(status=403)
-
 
 def serv_start():
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
@@ -31,6 +29,6 @@ def serv_start():
 
     app = web.Application()
     app.router.add_post('/{token}/', handle)
-
-    web.run_app(app, host=WH_LISTEN, port=WH_PORT, ssl_context=context)
+    log.info(bot.token)
     log.debug(f'App is running')
+    web.run_app(app, host=WH_LISTEN, port=WH_PORT, ssl_context=context)

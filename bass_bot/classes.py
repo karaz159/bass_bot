@@ -8,9 +8,10 @@ import time
 import eyed3
 import ffmpeg
 
+from telebot import TeleBot
 from config import BASS_PATH, DOWNLOAD_PATH
 from helpers import download, download_video, leet_translate
-from sqlworker import get_user
+from sqlworker import SqlWorker
 
 
 class TgAudio:  # Замена на filepath
@@ -137,3 +138,36 @@ class TgAudio:  # Замена на filepath
         Returns opened in bytes audio
         """
         return open(self.bass_done_path, 'rb')
+
+
+class BassBot(TeleBot):
+    def __init__(self, token: str, db_dsn, base):
+        super().__init__(token=token)
+        self.db = SqlWorker(db_dsn, base=base)
+
+    def listener(self):
+        """
+        listener function
+        that logs message to file
+        and updates last_message column in db # NOT_DRY
+        """
+        for message in messages:
+            if message.text:
+                log.info(f'{message.chat.username} - {message.text}')
+
+            elif message.voice:
+                log.info(f'{message.chat.username} - sended voice')
+
+            elif message.audio:
+                log.info(f'{message.chat.username} - sended audio')
+
+            elif message.document:
+                log.info(f'{message.chat.username} - sended document,'
+                         ' which we dont support yet')
+
+            with session_scope() as session:
+                dude = get_user(message.chat.id, session=session)
+                if dude:
+                    dude.last_message_date = datetime.utcnow()  # todo redo to postgresql
+                else:
+                    register_dude(message)  # ЕСЛИ КТО ТО НЕ ЗАРЕГАН ПО БАЗЕ НО УЖЕ ПОЛЬЗОВАТЕЛЬ
