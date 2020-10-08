@@ -4,25 +4,42 @@ allowing to set eyed3 tags, add dcb to bass, etc
 """
 import os
 import time
+from contextlib import contextmanager
+from dataclasses import dataclass
+from pathlib import Path
+from time import sleep
 
 import eyed3
 import ffmpeg
-
+from sqlalchemy import create_engine, exc
+from sqlalchemy.orm import sessionmaker
 from telebot import TeleBot
-from config import BASS_PATH, DOWNLOAD_PATH
+
+from config import BASS_PATH, DOWNLOAD_PATH, LOG_PATH, sys_log, file_log
 from helpers import download, download_video, leet_translate
-from sqlworker import SqlWorker
+from models import Dude
+from handlers import setup_handlers
 
 
-class TgAudio:  # Замена на filepath
+@dataclass()
+class Paths:
+    download: Path
+    bass: Path
+    log: Path
+
+    @property
+    def list(self):
+        return [self.log, self.bass, self.download]
+
+
+class TgAudio:
     """
     Main TgAudio class
     """
     def __init__(self, sender_id, src_path, content_type,
                  performer=None, title=None, update_tags=False):
-        # TODO to many logic in init?
         self.sender_id = sender_id
-        self.content_type = content_type
+        self.content_type = content_type  # TODO two classes?
 
         if self.content_type == 'audio':
             self.performer = performer
@@ -141,33 +158,135 @@ class TgAudio:  # Замена на filepath
 
 
 class BassBot(TeleBot):
-    def __init__(self, token: str, db_dsn, base):
+    def __init__(self, token: str, db_dsn, base,
+                 download_path: Path = DOWNLOAD_PATH,
+                 bass_path: Path = BASS_PATH,
+                 log_path: Path = LOG_PATH):
         super().__init__(token=token)
-        self.db = SqlWorker(db_dsn, base=base)
+        self.db = SqlWorker(base=base, db_dsn=db_dsn)
+        self.audio = TgAudio
+        self.paths = Paths(download=download_path,
+                           bass=bass_path,
+                           log=log_path)
+        self.audio = TgAudio
+        self.setup()
 
-    def listener(self):
-        """
-        listener function
-        that logs message to file
-        and updates last_message column in db # NOT_DRY
-        """
+
+    def setup(self):
+        self.update_listener.append(self.listener)
+        self.prepare_folders()
+        setup_handlers(self)
+
+    def prepare_folders(self):
+        for folder in self.paths.list:
+            if not folder.exists:
+                pass
+
+    @staticmethod
+    def listener(messages):
         for message in messages:
             if message.text:
-                log.info(f'{message.chat.username} - {message.text}')
+                file_log.info(f'{message.chat.username} - {message.text}')
 
             elif message.voice:
-                log.info(f'{message.chat.username} - sended voice')
+                file_log.info(f'{message.chat.username} - sent voice')
 
             elif message.audio:
-                log.info(f'{message.chat.username} - sended audio')
+                file_log.info(f'{message.chat.username} - sent audio')
 
             elif message.document:
-                log.info(f'{message.chat.username} - sended document,'
-                         ' which we dont support yet')
+                file_log.info(f'{message.chat.username} - sent document,'
+                              ' which we dont support yet')
 
-            with session_scope() as session:
-                dude = get_user(message.chat.id, session=session)
-                if dude:
-                    dude.last_message_date = datetime.utcnow()  # todo redo to postgresql
-                else:
-                    register_dude(message)  # ЕСЛИ КТО ТО НЕ ЗАРЕГАН ПО БАЗЕ НО УЖЕ ПОЛЬЗОВАТЕЛЬ
+
+class SqlWorker:
+    def __init__(self, base, db_dsn: str):
+        self.engine = create_engine(db_dsn)
+        self.session_maker = sessionmaker(bind=self.engine)
+        self.base = base
+        self.connect()
+
+    def connect(self):
+        while True:
+            try:
+                self.base.metadata.create_all(self.engine)
+                break
+            except exc.OperationalError:
+                print('ll')
+                sys_log.warning('can`t connect to db!')
+                sleep(5)
+
+    @contextmanager
+    def session_scope(self) -> sessionmaker:
+        """Provide a transactional scope around a series of operations."""
+        session = self.session_maker()
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def register_dude(self, message):
+        """
+        Register user from message
+        """
+        dude = Dude(tg_user_id=message.chat.id,
+                    user_name=message.chat.username,
+                    first_name=message.chat.first_name)
+
+        with self.session_scope() as session:
+            session.add(dude)
+            file_log.info(f"registered dude {message.chat.username} "
+                          f"with {dude.user_id} id!")
+
+    def get_user(self, tg_user_id, session=None) -> Dude:
+        """
+        Returns Dude row object
+        """
+        if not session:
+            with self.session_scope() as ses:
+                dude = ses.query(Dude).filter_by(tg_user_id=tg_user_id).one_or_none()
+                ses.expunge_all()
+        else:
+            dude = session.query(Dude).filter_by(tg_user_id=tg_user_id).one_or_none()
+        return dude
+
+    def check_state(self, tg_user_id, state) -> bool:  # TODO вообще нужен?
+        """
+        checks state of user
+        """
+        with self.session_scope() as session:
+            user = self.get_user(tg_user_id, session=session)
+            if user:
+                return user.curr_state == state
+        return False
+
+    def set_column(self, tg_user_id, state=None, last_src=None):
+        """
+        Saves current state of user.
+        """
+        with self.session_scope() as session:
+            dude = self.get_user(tg_user_id, session=session)
+            if state:
+                dude.curr_state = state
+            if last_src:
+                dude.last_source = last_src
+
+    def alt_bool(self, tg_user_id, transform=None, random=None):
+        # TODO Объеденить мб с верхней функцией?
+        # TODO сделать функцию get update
+        """
+        Alts bool of transform or random column
+        """
+        with self.session_scope() as session:
+            dude = self.get_user(tg_user_id, session=session)
+            if transform:
+                dude.transform_eyed3 = not dude.transform_eyed3
+                result = dude.transform_eyed3
+            if random:
+                dude.random_bass = not dude.random_bass
+                result = dude.random_bass
+        return result

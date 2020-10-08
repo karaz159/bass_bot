@@ -1,22 +1,12 @@
 """
 helpers file that contain useful features
 """
-import re
 from random import choice
 
 import youtube_dl
+from config import DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD
+from data import ALPHABET
 
-from config import bot
-from models import hz, ALPHABET
-
-def yt_link_check(link):
-    first = re.search("(https?:\/\/[w.y]+outube.com\/watch\?v=[^\s]+)", link)
-    second = re.search("(https?:\/\/[w.y]+outu.be\/[^\s]+)", link)
-    return first or second
-
-def my_hook(d):
-    if d['status'] == 'finished':
-        print('Done downloading, now converting ...')
 
 def download_video(link, path):
     path += '.mp4'
@@ -38,16 +28,16 @@ def download_video(link, path):
     return meta
 
 
-def download(message, name):
+def download(self, message, name):
     """
     downloads mp3 or voice via bot
     """
     if message.audio:
-        file_info = bot.get_file(message.audio.file_id)
+        file_info = self.get_file(message.audio.file_id)
     else:
-        file_info = bot.get_file(message.voice.file_id)
+        file_info = self.get_file(message.voice.file_id)
 
-    downloaded_file = bot.download_file(file_info.file_path)
+    downloaded_file = self.download_file(file_info.file_path)
 
     with open(name, 'wb') as new_file:
         new_file.write(downloaded_file)
@@ -55,18 +45,35 @@ def download(message, name):
     return name
 
 
+def is_supported(link):
+    extractors = youtube_dl.extractor.gen_extractors()
+    for e in extractors:
+        if e.suitable(link) and e.IE_NAME != 'generic':
+            return True
+    return False
+
+
+def my_hook(d):
+    if d['status'] == 'finished':
+        print('Done downloading, now converting ...')
+
+
 def leet_translate(word):
-    '''
+    """
     transforms any word to cringe
-    '''
-    shit = ''
+    """
+    cringe = ''
     if word:
         for character in word.lower():
             bad_character = ALPHABET.get(character)
             if bad_character:
-                shit += choice(bad_character) # nosec
+                cringe += choice(bad_character)  # nosec
             else:
-                shit += character
+                cringe += character
     else:
-        shit = choice(hz) # nosec
-    return shit
+        cringe = choice(ALPHABET.hz)  # nosec
+    return cringe
+
+
+def get_db_dsn(user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT, db_name=DB_NAME):
+    return f'postgresql://{user}:{password}@{host}:{port}/{db_name}'
