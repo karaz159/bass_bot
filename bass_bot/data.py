@@ -1,11 +1,3 @@
-class States:
-    start = 'start'
-    asking_for_stuff = 'asking_for_stuff'
-    asking_bass_pwr = 'asking_bass_pwr'
-    downloading = 'downloading'
-    boosting = 'boosting'
-
-
 class Answers:  # TODO middleware
     file_lost = 'Йоу, потерялся твой файл, можешь еще раз скинуть?'
     got_text = 'Мне нужна голосовуха либо аудиозапись, братан /info'

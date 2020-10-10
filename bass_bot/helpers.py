@@ -6,6 +6,8 @@ from random import choice
 import youtube_dl
 from config import DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD
 from data import ALPHABET
+from pathlib import Path
+from telebot.types import Message
 
 
 def download_video(link, path):
@@ -22,30 +24,15 @@ def download_video(link, path):
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         meta = ydl.extract_info(link, download=False)
+
         if meta['duration'] > 600:
             raise ValueError
+
         ydl.download([link])
     return meta
 
 
-def download(self, message, name):
-    """
-    downloads mp3 or voice via bot
-    """
-    if message.audio:
-        file_info = self.get_file(message.audio.file_id)
-    else:
-        file_info = self.get_file(message.voice.file_id)
-
-    downloaded_file = self.download_file(file_info.file_path)
-
-    with open(name, 'wb') as new_file:
-        new_file.write(downloaded_file)
-
-    return name
-
-
-def is_supported(link):
+def this_is_downloadable_link(link):
     extractors = youtube_dl.extractor.gen_extractors()
     for e in extractors:
         if e.suitable(link) and e.IE_NAME != 'generic':

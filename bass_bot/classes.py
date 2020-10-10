@@ -8,17 +8,19 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from time import sleep
+from typing import List, Optional
 
 import eyed3
 import ffmpeg
 from sqlalchemy import create_engine, exc
 from sqlalchemy.orm import sessionmaker
 from telebot import TeleBot
+from telebot.types import Message
 
-from config import BASS_PATH, DOWNLOAD_PATH, LOG_PATH, sys_log, file_log
-from helpers import download, download_video, leet_translate
-from models import Dude
+from config import BASS_PATH, DOWNLOAD_PATH, LOG_PATH, sys_log
 from handlers import setup_handlers
+from helpers import download_video, leet_translate
+from models import Dude
 
 
 @dataclass()
@@ -28,7 +30,7 @@ class Paths:
     log: Path
 
     @property
-    def list(self):
+    def list(self) -> List[Path]:
         return [self.log, self.bass, self.download]
 
 
@@ -36,17 +38,19 @@ class TgAudio:
     """
     Main TgAudio class
     """
-    def __init__(self, sender_id, src_path, content_type,
-                 performer=None, title=None, update_tags=False):
+    def __init__(self, sender_id: int, src_path: Path, content_type, bot: BassBot,
+                 performer: str = None, title: str = None, update_tags: bool = False):
         self.sender_id = sender_id
-        self.content_type = content_type  # TODO two classes?
+        self.content_type = content_type
+        self.performer = performer
+        self.title = title
+        self.bot = bot
 
         if self.content_type == 'audio':
-            self.performer = performer
-            self.title = title
             self.bass_done_path = f'{BASS_PATH}{self.sender_id}B.mp3'
         else:
             self.bass_done_path = f'{BASS_PATH}{self.sender_id}B.ogg'
+
         self.src_path = src_path
         self.transform_eyed3 = False
         if update_tags:
@@ -61,7 +65,7 @@ class TgAudio:
         Make this class from message,
         just pass message from tg
         """
-        src_path = f'{DOWNLOAD_PATH}{m.chat.id}.mp3' if m.audio else f'{DOWNLOAD_PATH}{m.chat.id}.ogg'
+        src_path = DOWNLOAD_PATH / f'{m.chat.id}.mp3' if m.audio else DOWNLOAD_PATH / f'{m.chat.id}.ogg'
 
         download(m, src_path)
 
@@ -103,7 +107,6 @@ class TgAudio:
         Makes class out of youtube video
         """
         src_path = f'{DOWNLOAD_PATH}{m.chat.id}'
-
         try:
             os.remove(f'{src_path}.mp3')
             os.remove(f'{src_path}.mp4')
@@ -156,6 +159,9 @@ class TgAudio:
         """
         return open(self.bass_done_path, 'rb')
 
+    def __str__(self):
+        return str(self.src_path)
+
 
 class BassBot(TeleBot):
     def __init__(self, token: str, db_dsn, base,
@@ -168,9 +174,7 @@ class BassBot(TeleBot):
         self.paths = Paths(download=download_path,
                            bass=bass_path,
                            log=log_path)
-        self.audio = TgAudio
         self.setup()
-
 
     def setup(self):
         self.update_listener.append(self.listener)
@@ -179,24 +183,39 @@ class BassBot(TeleBot):
 
     def prepare_folders(self):
         for folder in self.paths.list:
-            if not folder.exists:
-                pass
+            folder.mkdir(exist_ok=True)
 
     @staticmethod
     def listener(messages):
         for message in messages:
             if message.text:
-                file_log.info(f'{message.chat.username} - {message.text}')
+                sys_log.info(f'{message.chat.username} - {message.text}')
 
             elif message.voice:
-                file_log.info(f'{message.chat.username} - sent voice')
+                sys_log.info(f'{message.chat.username} - sent voice')
 
             elif message.audio:
-                file_log.info(f'{message.chat.username} - sent audio')
+                sys_log.info(f'{message.chat.username} - sent audio')
 
             elif message.document:
-                file_log.info(f'{message.chat.username} - sent document,'
-                              ' which we dont support yet')
+                sys_log.info(f'{message.chat.username} - sent document,'
+                             ' which we dont support yet')
+
+    def download(self, message: Message, name: Path):
+        """
+        downloads mp3 or voice via bot
+        """
+        if message.audio:
+            file_info = self.get_file(message.audio.file_id)
+        else:
+            file_info = self.get_file(message.voice.file_id)
+
+        downloaded_file = self.download_file(file_info.file_path)
+
+        with name.open('wb') as new_file:
+            new_file.write(downloaded_file)
+
+        return name
 
 
 class SqlWorker:
@@ -212,12 +231,11 @@ class SqlWorker:
                 self.base.metadata.create_all(self.engine)
                 break
             except exc.OperationalError:
-                print('ll')
                 sys_log.warning('can`t connect to db!')
                 sleep(5)
 
     @contextmanager
-    def session_scope(self) -> sessionmaker:
+    def session_scope(self) -> sessionmaker:  # TODO is there others scopes in sqlalchemy?
         """Provide a transactional scope around a series of operations."""
         session = self.session_maker()
         try:
@@ -229,64 +247,33 @@ class SqlWorker:
         finally:
             session.close()
 
-    def register_dude(self, message):
-        """
-        Register user from message
-        """
-        dude = Dude(tg_user_id=message.chat.id,
-                    user_name=message.chat.username,
-                    first_name=message.chat.first_name)
-
-        with self.session_scope() as session:
-            session.add(dude)
-            file_log.info(f"registered dude {message.chat.username} "
-                          f"with {dude.user_id} id!")
-
-    def get_user(self, tg_user_id, session=None) -> Dude:
+    @staticmethod
+    def get_user(message: Message, session) -> Dude:
         """
         Returns Dude row object
         """
-        if not session:
-            with self.session_scope() as ses:
-                dude = ses.query(Dude).filter_by(tg_user_id=tg_user_id).one_or_none()
-                ses.expunge_all()
-        else:
-            dude = session.query(Dude).filter_by(tg_user_id=tg_user_id).one_or_none()
+        dude = session.query(Dude).filter_by(tg_user_id=message.chat.id).one_or_none()
+        if not dude:
+            dude = Dude(tg_user_id=message.chat.id,
+                        user_name=message.chat.username)
+            session.add(dude)
+
+            sys_log.info(f"registered dude {message.chat.username} "
+                         f"with {dude.tg_user_id} id!")
+
         return dude
 
-    def check_state(self, tg_user_id, state) -> bool:  # TODO вообще нужен?
-        """
-        checks state of user
-        """
-        with self.session_scope() as session:
-            user = self.get_user(tg_user_id, session=session)
-            if user:
-                return user.curr_state == state
-        return False
+    def check_state(self, message: Message = None, state: str = None):
+        with self.session_scope() as ses:
+            user = self.get_user(message=message, session=ses)
+            if user.curr_state == state:
+                return True
+            return False
 
-    def set_column(self, tg_user_id, state=None, last_src=None):
-        """
-        Saves current state of user.
-        """
-        with self.session_scope() as session:
-            dude = self.get_user(tg_user_id, session=session)
-            if state:
-                dude.curr_state = state
-            if last_src:
-                dude.last_source = last_src
+    def provide_session(self, function):
+        def session_wrapper(*args, **kwargs):
+            with self.session_scope() as ses:
+                return function(*args, ses, **kwargs)
 
-    def alt_bool(self, tg_user_id, transform=None, random=None):
-        # TODO Объеденить мб с верхней функцией?
-        # TODO сделать функцию get update
-        """
-        Alts bool of transform or random column
-        """
-        with self.session_scope() as session:
-            dude = self.get_user(tg_user_id, session=session)
-            if transform:
-                dude.transform_eyed3 = not dude.transform_eyed3
-                result = dude.transform_eyed3
-            if random:
-                dude.random_bass = not dude.random_bass
-                result = dude.random_bass
-        return result
+        return session_wrapper
+
