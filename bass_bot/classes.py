@@ -1,8 +1,6 @@
 """
 Module describes all classes
 """
-import os
-import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,7 +14,7 @@ from sqlalchemy.orm import sessionmaker
 from telebot import TeleBot
 from telebot.types import Message
 
-from config import BASS_PATH, DOWNLOAD_PATH, LOG_PATH, sys_log, LOG_SQL
+from config import BASS_PATH, DOWNLOAD_PATH, LOG_PATH, LOG_SQL, sys_log
 from handlers import setup_handlers
 from helpers import download_video, leet_translate
 from models import Dude

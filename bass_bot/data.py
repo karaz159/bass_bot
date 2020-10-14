@@ -1,32 +1,31 @@
 class Answers:  # TODO middleware
-    file_lost = 'Йоу, потерялся твой файл, можешь еще раз скинуть?'
-    got_text = 'Мне нужна голосовуха либо аудиозапись, братан /info'
-    got_document = 'Документы я не поддерживаю'
-    started_already = "Я посвятил тебя уже во все, что можно, братан"
-    shit_happend = ("Хм, что то пошло не так, на твоем бы месте"
-                    "я бы рассказал автору как ты этого добился")
+    start = 'Hello there! Ready to boost your stuff, use /info for more details'
+    reset = "Resetting your state back to normal"
+    file_lost = "Damn, i've lost your file, can you send me another one?"
+    got_document = "Sorry, but for now i don't support docs"
+
+    turn_on = "Turning on"
+    turn_off = "Turning off"
+    random_bass = "random bass"
+    random_tags = "random audio tags"
+    info = ("All you need is to pass me some audio or voice \n"
+            "Also you can change the way i behave with your stuff\n"
+            "Try /random /transform !")
+    got_text = info
+    after_start = info
+    numbers_needed = 'Please feed me some numbers from 0 to 100'
+    num_range = 'I can accept numbers from 0 to 100'
+    downloading = 'Downloading things, please wait'
+    boosting = 'Boosting things, please wait'
+    bye = 'Thanks for using bot, hope to see you soon. bye!'
+    large_video = 'Video is larger than expected! 10 minutes max!'
+    yt_failed = 'Something bad happend with youtube download ;c, check other video, please!'
+    making_bass_with_power = 'Making your bass with power:'
+
     try:
         hm = open('./hm.ogg', 'rb')
     except FileNotFoundError:
         pass
-
-    start = 'че пацаны, бассбуст? Краткий тутор доступен через /info'
-    reset = "Восстанавливаю стандартные значения"
-    turn_on = "Включаю"
-    turn_off = "Отключаю"
-    random_bass = "рандомный басс"
-    random_tags = "рандомные тэги"
-    info = ("Все, что нужно, так это бросить "
-            "мне аудиофайл или голосовуху\n"
-            "Так же возможно менять поведение "
-            "бота командами \n/random \n/transform")
-    after_start = "Все, что нужно, так это бросить мне аудиофайл или голосовуху"
-    got_it = 'Принял'
-    too_much = 'Слишком много всякого, не могу скачать'
-    numbers_needed = 'Цифра нужна, братан'
-    num_range = 'От 1 до 100, братан'
-    downloading = 'Мой чувак, качаю вещи'
-    boosting = 'Мой чувак, бустаю вещи'
 
 
 a = ('@', 'A', 'а')
