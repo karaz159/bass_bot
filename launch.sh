@@ -11,4 +11,4 @@ if [ -n "${WH_HOST}" ]; then
   fi
 
 fi
-python main.py
+python bass_bot/main.py

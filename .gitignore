@@ -8,6 +8,6 @@ database.vdb
 *.pem
 .vscode/
 download/
-
+.idea
 .python-version
 docker-compose.override.yml

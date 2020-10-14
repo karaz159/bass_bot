@@ -1,43 +1,7 @@
-"""
-Module that represents
-metadata of DUDES in db
-States and Answers
-"""
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
-from sqlalchemy.ext.declarative import declarative_base
-
-BASE = declarative_base()
-
-
-class States:
-    start = 'start'
-    asking_for_stuff = 'asking_for_stuff'
-    asking_bass_pwr = 'asking_bass_pwr'
-    downloading = 'downloading'
-    boosting = 'boosting'
-
-
-class Dude(BASE):
-    """
-    Main dude sqlalchemy class
-    """
-    __tablename__ = "dudes"
-
-    user_id = Column(Integer, primary_key=True, nullable=False)
-    tg_user_id = Column(Integer, unique=True)
-    user_name = Column(String)
-    first_name = Column(String)
-    curr_state = Column(String, server_default=States.start, nullable=False)
-    random_bass = Column(Boolean, default=False, nullable=False)
-    transform_eyed3 = Column(Boolean, default=True, nullable=False)
-    last_message_date = Column(DateTime, server_default=func.now(), nullable=False)
-    first_message_date = Column(DateTime, server_default=func.now(), nullable=False)
-    last_source = Column(String, unique=True)
-
-
 class Answers:  # TODO middleware
     file_lost = 'Йоу, потерялся твой файл, можешь еще раз скинуть?'
     got_text = 'Мне нужна голосовуха либо аудиозапись, братан /info'
+    got_document = 'Документы я не поддерживаю'
     started_already = "Я посвятил тебя уже во все, что можно, братан"
     shit_happend = ("Хм, что то пошло не так, на твоем бы месте"
                     "я бы рассказал автору как ты этого добился")
@@ -142,5 +106,6 @@ ALPHABET = {
     'w': ('w', 'W'),
     'x': ('x', 'X', 'XX'),
     'y': ('y', 'Y'),
-    'z': z
+    'z': z,
+    'hz': hz
 }

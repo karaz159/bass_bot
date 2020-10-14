@@ -1,9 +1,8 @@
-eyeD3==0.9.3
-pyTelegramBotAPI==3.6.7
-SQLAlchemy==1.3.12
+eyeD3==0.9.5
+pyTelegramBotAPI==3.7.3
+SQLAlchemy==1.3.19
 ffmpeg-python==0.2.0
-youtube-dl==2020.5.3
-psycopg2==2.8.5
-CherryPy==18.5.0
+youtube-dl==2020.9.20
+psycopg2==2.8.6
 PySocks==1.7.1
 aiohttp==3.6.2
