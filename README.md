@@ -2,9 +2,7 @@
 
 This bot will add bass to your audios and voice messages depending on your choice.
 
-![tutor](https://github.com/karaz159/bass_bot/blob/master/stuff/pic/tutor.gif)
-
-Bot is avialible at https://t.me/Baasss_bot
+Bot is available at https://t.me/Baasss_bot
 
 Enjoy!
 
@@ -25,17 +23,18 @@ docker run -e TOKEN=<TG_TOKEN> \
            -e DB_NAME=<Database name> \
            -e DB_PORT=<Database port> \
            -e DB_USER=<Database user> \
-           -e DB_PASSWORD=example kz159/bass_bot:latest
+           -e DB_PASSWORD=example 
+           -e YT_LOGIN=your yt email
+           -e YT_PASSWORD=your yt password
+           kz159/bass_bot:latest
 ```
 
 # Launch in server mode
+To launch it in server mode just add these args to docker run
 ```
-docker run -e TOKEN=<TG_TOKEN> \
-           -e DB_HOST=172.17.0.1 \
            -e WH_HOST=<Your external ip address> \
            -e WH_PORT=<Webhook ports, 8443, 443, 80 and 88 are supported> \
            -e SERVER_FLAG=Yes \
-           -e DB_PASSWORD=example kz159/bass_bot:latest
 ```
 
 
@@ -44,5 +43,8 @@ docker run -e TOKEN=<TG_TOKEN> \
 * ~~docker instructions~~
 * ~~docker autogenerate ssl cert if not provided~~
 
-# V2 Update
-* Brings two switches, /random and /transform 
+# Changelog
+1. Brings two switches, /random and /transform
+1. There's no need to generate ssl certs for server,  
+   container will do it automatically if you don't pass him certs
+1. You can now boost your youtube videos!
