@@ -12,9 +12,6 @@ openssl genrsa -out WH_pkey.pem 2048
 openssl req -new -x509 -days 3650 -key WH_pkey.pem -out WH_cert.pem
 ```
 There`s no need for that, bass bot will generate it for you automatically if certs was not found
-# TODO
-curl to variable ip address from ifconfig.me if wh-host not presented and server flag enabled
-
 
 # Launch in polling mode
 ```
@@ -42,9 +39,11 @@ To launch it in server mode just add these args to docker run
 
 * ~~docker instructions~~
 * ~~docker autogenerate ssl cert if not provided~~
+* curl to variable ip address from ifconfig.me if wh-host not presented and server flag enabled
+
 
 # Changelog
 1. Brings two switches, /random and /transform
-1. There's no need to generate ssl certs for server,  
+2. There's no need to generate ssl certs for server,  
    container will do it automatically if you don't pass him certs
-1. You can now boost your youtube videos!
+3. You can now boost youtube videos!
