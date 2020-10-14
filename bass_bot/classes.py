@@ -1,6 +1,5 @@
 """
-Module describes audio class
-allowing to set eyed3 tags, add dcb to bass, etc
+Module describes all classes
 """
 import os
 import time
