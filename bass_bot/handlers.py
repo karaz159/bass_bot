@@ -8,7 +8,6 @@ from models import States
 from youtube_dl.utils import DownloadError
 from config import sys_log
 
-
 def setup_handlers(bot):
     @bot.message_handler(commands=['start'])
     @bot.db.provide_session
@@ -37,7 +36,7 @@ def setup_handlers(bot):
         dude, _ = bot.db.get_user(message, session=session)
         dude.transform_eyed3 = not dude.transform_eyed3
         action = Answers.turn_on if dude.transform_eyed3 else Answers.turn_off
-        bot.send_message(message.chat.id, f"{action} {Answers.random_tags}!")
+        bot.send_message(message.chat.id, f"{action} transform!")
 
     @bot.message_handler(commands=["random"])
     @bot.db.provide_session
@@ -45,13 +44,13 @@ def setup_handlers(bot):
         dude, _ = bot.db.get_user(message, session=session)
         dude.random_bass = not dude.random_bass
         action = Answers.turn_on if dude.random_bass else Answers.turn_off
-        bot.send_message(message.chat.id, f"{action} {Answers.random_bass}!")
+        bot.send_message(message.chat.id, f"{action} random!")
 
     @bot.message_handler(commands=["delete"])
     @bot.db.provide_session
     def delete_user(message, session):
         dude, _ = bot.db.get_user(message, session=session)
-        bot.send_message(message.chat.id, Answers.bye)
+        bot.send_message(message.chat.id, 'Thanks for using bot, bye!')
         session.delete(dude)
 
     @bot.message_handler(commands=["info"])
@@ -81,16 +80,16 @@ def setup_handlers(bot):
                 audio = bot.audio.from_yt(m, yt_link)
             except ValueError as e:
                 sys_log.error(e)
-                bot.send_message(m.chat.id, Answers.large_video)
+                bot.send_message(m.chat.id, 'Слишком большой видос, 10 минут макс')
                 dude.curr_state = States.asking_bass_pwr
                 return
             except DownloadError:
-                bot.send_message(m.chat.id, Answers.yt_failed)
+                bot.send_message(m.chat.id, 'Что то случилось с зугрузкой видео :с Попробуй другой видос!')
                 dude.curr_state = States.asking_bass_pwr
                 return
             except Exception as e:
                 sys_log.exception(e)
-                bot.send_message(m.chat.id, Answers.yt_failed)
+                bot.send_message(m.chat.id, 'Что то случилось с зугрузкой видео :с Попробуй другой видос!')
                 dude.curr_state = States.asking_bass_pwr
 
         else:
@@ -104,7 +103,7 @@ def setup_handlers(bot):
             random_power = randint(5, 50)  # nosec
             dude.curr_state = States.boosting
             session.commit()
-            bot.send_message(m.chat.id, f'{Answers.making_bass_with_power} {random_power}')
+            bot.send_message(m.chat.id, f'пилю бас, сила: {random_power}')
             bot.send_chat_action(m.chat.id, "record_audio")
             audio.bass_boost(random_power)  # nosec
             bot.send_chat_action(m.chat.id, "upload_audio")
