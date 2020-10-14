@@ -20,4 +20,4 @@ WORKDIR /app
 
 COPY . .
 
-CMD ./launch.sh
+CMD bash launch.sh
