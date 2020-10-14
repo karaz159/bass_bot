@@ -20,4 +20,6 @@ WORKDIR /app
 
 COPY . .
 
+RUN mkdir /opt/bass/
+
 CMD sh launch.sh
