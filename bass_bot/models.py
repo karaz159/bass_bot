@@ -21,13 +21,13 @@ class Dude(BASE):
     """
     Main dude sqlalchemy class
     """
-    last_source = Column(String, unique=True)
     __tablename__ = "dudes"
 
     user_id = Column(Integer, primary_key=True)
     tg_user_id = Column(Integer, unique=True)
     user_name = Column(String)
     curr_state = Column(String, server_default=States.start)  # TODO enum
+    last_source = Column(String, unique=True)
     random_bass = Column(Boolean, default=False)
     transform_eyed3 = Column(Boolean, default=True)
     last_message_date = Column(DateTime, server_default=func.now(), onupdate=func.now())

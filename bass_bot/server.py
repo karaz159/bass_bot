@@ -28,6 +28,4 @@ def serv_start(bot):
 
     app = web.Application()
     app.router.add_post('/{token}/', partial(handle, bot=bot))
-    sys_log.info(f'{bot.token[6:]} <- 6 first characters in TOKEN!')
-    print('loh')
     web.run_app(app, host=WH_LISTEN, port=WH_PORT, ssl_context=context)

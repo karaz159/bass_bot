@@ -4,17 +4,17 @@ helpers file that contain useful features
 from random import choice
 
 import youtube_dl
-from config import DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD
+from config import DB_HOST, DB_NAME, DB_PORT, DB_USER, DB_PASSWORD, YT_LOGIN, YT_PASSWORD, sys_log
 from data import ALPHABET
 from pathlib import Path
-from telebot.types import Message
 
 
-def download_video(link, path):
-    path += '.mp4'
+def download_video(link, path: Path):
     ydl_opts = {
+        'username': YT_LOGIN,
+        'password': YT_PASSWORD,
         'format': 'bestaudio/best',
-        'outtmpl': path,
+        'outtmpl': str(path.with_suffix('.mp4')),
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -22,9 +22,16 @@ def download_video(link, path):
         }],
         'progress_hooks': [my_hook],
     }
+
+    if '&' in link:
+        link = link.split('&')[0]
+
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         meta = ydl.extract_info(link, download=False)
-
+        sys_log.info(f'Meta - {meta}\n'
+                     f'duration - {meta.get("duration", "NONE")}')
+        if not meta.get('duration'):
+            sys_log.error('Can`t get meta duration!')
         if meta['duration'] > 600:
             raise ValueError
 
@@ -58,7 +65,7 @@ def leet_translate(word):
             else:
                 cringe += character
     else:
-        cringe = choice(ALPHABET.hz)  # nosec
+        cringe = choice(ALPHABET['hz'])  # nosec
     return cringe
 
 
