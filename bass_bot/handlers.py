@@ -21,7 +21,7 @@ def setup_handlers(bot):
         elif state in [States.start, States.asking_for_stuff]:
             bot.send_message(m.chat.id, Answers.after_start)
         elif state == States.asking_bass_pwr:
-            if getattr(Answers, 'hm'):
+            if Answers.hm:
                 bot.send_voice(m.chat.id, Answers.hm)
 
     @bot.message_handler(commands=['reset'])
