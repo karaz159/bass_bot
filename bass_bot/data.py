@@ -25,7 +25,7 @@ class Answers:  # TODO middleware
     try:
         hm = open('./hm.ogg', 'rb')
     except FileNotFoundError:
-        pass
+        hm = None
 
 
 a = ('@', 'A', 'а')
