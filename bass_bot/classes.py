@@ -209,7 +209,9 @@ class TgAudio:
             raise FileNotFoundError
 
         if src.suffix == '.mp3':
-            tags = eyed3.load(src).tag
+            tags = eyed3.load(src)
+            if tags:
+                tags = tags.tag
             return cls(sender_id=m.chat.id,
                        src_path=src,
                        content_type='audio',
