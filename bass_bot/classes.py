@@ -98,8 +98,8 @@ class SqlWorker:
             try:
                 self.base.metadata.create_all(self.engine)
                 break
-            except exc.OperationalError:
-                sys_log.warning('can`t connect to db!')
+            except exc.OperationalError as e:
+                sys_log.warning(f'can`t connect to db! reason: {e}')
                 sleep(5)
 
     @contextmanager
