@@ -6,7 +6,7 @@ on:
       - master
   pull_request:
     branches:   
-      - master   # TODO redo to separate file
+      - master
 
 env:
   IMAGE_NAME: bass_bot
