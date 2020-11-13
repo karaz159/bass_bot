@@ -4,24 +4,16 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:   
-      - master   # TODO redo to separate file
 
 env:
   IMAGE_NAME: bass_bot
   EVENT: ${{ github.event_name }}
-  REF: ${{ github.ref }}
 
 jobs:
   push:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        if: github.event_name == 'push'
-        with:
-          ref: ${{ github.ref }}
-
       - name: Build image
         run: |
           docker build . --file Dockerfile --tag $IMAGE_NAME
@@ -31,20 +23,11 @@ jobs:
 
       - name: Push image
         run: |
-          VERSION=$(echo $REF | sed -e 's,.*/\(.*\),\1,')
           IMAGE_ID=kz159/$IMAGE_NAME
-          echo VERSION $VERSION
-          
+
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          
-          if [ $VERSION = "dev" ]
-          then
-            VERSION="latest-dev"
-          else
-            VERSION='latest'
-          fi
-          
+          VERSION="latest"
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
           
